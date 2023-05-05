@@ -8,5 +8,8 @@ Once turned ON, by default the application monitors the cellular signal quality.
 If the `Button #1` is pressed the application shuts down and the log file is saved and closed. If you do not press `Button #1` and simply turn off the XPLR-IoT-1 device then the log file will not save the entire log.
 
 ## Building the application
-Use the do build script with the -e argument.
-`do -e cellular_tracker build`
+Use the do build script with the -e argument: `do -e cellular_tracker build`
+
+## Configuring the application
+Using the [config.h](config/config.h) file in the [config](config/) folder you will find the cellular URAT and APN settings, plus the MQTT credentials which are not checked into this repository. There is an [exampleConfigFile.h](config/exampleConfigFile.h) for you to edit and #include in the config.h file.
+
