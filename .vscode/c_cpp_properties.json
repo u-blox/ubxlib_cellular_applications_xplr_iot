@@ -4,9 +4,10 @@
             "name": "Applications",
             "includePath": [
                 "${default}",
-                "${workspaceFolder}/examples/tasks",
-                "${workspaceFolder}/examples/common",
-                "${workspaceFolder}/ubxlib"
+                "${workspaceFolder}/applications/tasks",
+                "${workspaceFolder}/applications/common",
+                "${workspaceFolder}/ubxlib/**",
+                "${workspaceFolder}/../env/ncs/zephyr/**"
             ],
             "defines": [
                 "_DEBUG",
