@@ -15,7 +15,7 @@
 
 # do
 #
-# Wrapper command for building and flashing the XPLR-IOT-1 examples.
+# Wrapper command for building and flashing the XPLR-IOT-1 applications.
 # Also handles Visual Studio Code integration.
 
 import os
@@ -38,7 +38,7 @@ cwd = os.getcwd()
 top_dir = os.path.dirname(os.path.realpath(__file__))
 is_linux = 'linux' in sys.platform
 exe_suffix = "" if is_linux else ".exe"
-examples_root = top_dir + "/examples/"
+applications_root = top_dir + "/applications/"
 args = ""
 
 
@@ -81,8 +81,8 @@ def get_exe_file(args, signed, use_jlink, net_cpu = False):
 #--------------------------------------------------------------------
 
 def build():
-    print(f"=== {args.example} ===")
-    os.chdir(examples_root + args.example)
+    print(f"=== {args.application} ===")
+    os.chdir(applications_root + args.application)
     com = f"west build --board nrf5340dk_nrf5340_cpuapp --build-dir {args.build_dir}"
     if args.pristine:
         com += " --pristine"
@@ -223,15 +223,15 @@ def vscode_files():
     with open(templ_dir + "/tasks_tmpl.json", "r") as f:
         tasks = f.read()
     tasks = re.sub("\$DO", do_com, tasks)
-    tasks = re.sub("\$EXAMPLES", re.sub("'", "\"", f"{examples}"), tasks)
-    tasks = re.sub("\$DEF_EX", f"{args.example}", tasks)
+    tasks = re.sub("\$applicationS", re.sub("'", "\"", f"{applications}"), tasks)
+    tasks = re.sub("\$DEF_EX", f"{args.application}", tasks)
     with open(vscode_dir + "/tasks.json", "w") as f:
         f.write(tasks)
 
     # Launch
     with open(templ_dir + "/launch_tmpl.json", "r") as f:
         launch = f.read()
-    launch = re.sub("\$BUILD_DIR", Path(f"{settings['build_dir']}/{args.example}").as_posix(), launch)
+    launch = re.sub("\$BUILD_DIR", Path(f"{settings['build_dir']}/{args.application}").as_posix(), launch)
     launch = re.sub("\$EXE_FILE", os.path.basename(get_exe_file(args, not args.no_bootloader, True, False)), launch)
     launch = re.sub("\$TC_DIR", gcc_bin_dir, launch)
     gdb_exe = sorted(Path(gcc_bin_dir).rglob(f"*gdb{exe_suffix}"))[0].as_posix()
@@ -241,7 +241,7 @@ def vscode_files():
 
     # C/C++
     # Get defines and includes from the generated Zephyr Ninja build file
-    comp_file = f"{settings['build_dir']}/{args.example}/build.ninja"
+    comp_file = f"{settings['build_dir']}/{args.application}/build.ninja"
     if not exists(comp_file):
         # Not built before, must do a first one
         build()
@@ -274,13 +274,13 @@ def vscode():
     build()
     os.chdir(cwd)
     vscode_files()
-    exec_command(f"code . -g {examples_root}{args.example}/src/main.c")
+    exec_command(f"code . -g {applications_root}{args.application}/src/main.c")
 
 #--------------------------------------------------------------------
 
 def select():
     vscode()
-    print(f"\n=== \"{args.example}\" is now the selected example for builds ===\n")
+    print(f"\n=== \"{args.application}\" is now the selected application for builds ===\n")
 
 #--------------------------------------------------------------------
 
@@ -381,11 +381,11 @@ def check_directories():
         settings['build_dir'] = args.build_dir
     elif not 'build_dir' in settings:
         settings['build_dir'] = top_dir + "/_build"
-    args.build_dir = settings['build_dir'] + "/" + args.example
+    args.build_dir = settings['build_dir'] + "/" + args.application
 
 #--------------------------------------------------------------------
-def list(examples):
-    print(f"Current application: \"{args.example}\"\nAvailable: {examples}")
+def list(applications):
+    print(f"Current application: \"{args.application}\"\nAvailable: {applications}")
     sys.exit(0)
 
 if __name__ == "__main__":
@@ -397,8 +397,8 @@ if __name__ == "__main__":
     parser.add_argument("operation", nargs='+',
                         help="Operation to be performed: vscode, build, flash, run, monitor, debug, list",
                         )
-    parser.add_argument("-e", "--example",
-                        help="Name of the example",
+    parser.add_argument("-e", "--application",
+                        help="Name of the application",
                         )
     parser.add_argument("-p", "--pristine",
                         help="Pristine build (rebuild)",
@@ -434,35 +434,35 @@ if __name__ == "__main__":
 
     if not top_dir in cwd and exists(f"{cwd}/src"):
         # Application outside of the repo
-        examples_root = os.path.realpath(cwd + "/..")
-        if args.example == None:
-            args.example = os.path.split(cwd)[1]
-        examples_root += "/"
+        applications_root = os.path.realpath(cwd + "/..")
+        if args.application == None:
+            args.application = os.path.split(cwd)[1]
+        applications_root += "/"
 
-    examples = []
-    for entry in os.scandir(examples_root):
-        if entry.is_dir() and exists(examples_root + entry.name + "/src"):
-            examples.append(entry.name)
-    examples.sort()
-	
+    applications = []
+    for entry in os.scandir(applications_root):
+        if entry.is_dir() and exists(applications_root + entry.name + "/src"):
+            applications.append(entry.name)
+    applications.sort()
+
     if args.operation[0] == "list":
-        list(examples)
+        list(applications)
 
     read_settings()
     read_state()
-    if args.example == None:
-        if 'example' in state:
-            args.example = state['example']
+    if args.application == None:
+        if 'application' in state:
+            args.application = state['application']
         else:
-            args.example = "blink"
-    if not args.example in examples:
-        error_exit(f"Invalid example \"{args.example}\"\nAvailable: {examples}")
+            args.application = "cellular_tracker"
+    if not args.application in applications:
+        error_exit(f"Invalid application \"{args.application}\"\nAvailable: {applications}")
     settings['no_bootloader'] = args.no_bootloader
     if args.uart_name != None:
         settings['uart_name'] = args.uart_name
     check_directories()
     set_env()
-    state['example'] = args.example
+    state['application'] = args.application
     save_state()
 
     # Execute specified operation
