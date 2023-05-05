@@ -25,6 +25,7 @@
  */
 
 #include "common.h"
+#include "config.h"
 #include "ext_fs.h"
 #include "leds.h"
 #include "buttons.h"

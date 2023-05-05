@@ -21,6 +21,7 @@
 */
 
 #include "common.h"
+#include "config.h"
 #include "registrationTask.h"
 #include "NTPClient.h"
 

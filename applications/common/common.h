@@ -31,8 +31,10 @@
 #include <stdint.h>
 
 #include "ubxlib.h"
-#include "config.h"
+#include "configUtils.h"
 #include "log.h"
+
+#include "kernel.h"
 
 /* ----------------------------------------------------------------
  * MACORS for common task usage/access

@@ -47,4 +47,7 @@ file(REAL_PATH "${CMAKE_CURRENT_LIST_DIR}/tasks" APP_TASKS_DIR)
 file(GLOB APP_TASKS "${APP_TASKS_DIR}/*.c")
 
 target_sources(app PRIVATE ${APP_COMMONS} ${APP_TASKS})
-target_include_directories(app PRIVATE ${APP_COMMON_DIR} ${APP_TASKS_DIR})
+
+file(REAL_PATH "${CMAKE_SOURCE_DIR}/config/" APP_CONFIG)
+
+target_include_directories(app PRIVATE ${APP_COMMON_DIR} ${APP_TASKS_DIR} ${APP_CONFIG})
