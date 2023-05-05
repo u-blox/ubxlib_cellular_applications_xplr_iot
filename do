@@ -384,7 +384,9 @@ def check_directories():
     args.build_dir = settings['build_dir'] + "/" + args.example
 
 #--------------------------------------------------------------------
-
+def list(examples):
+    print(f"Current application: \"{args.example}\"\nAvailable: {examples}")
+    sys.exit(0)
 
 if __name__ == "__main__":
 
@@ -393,7 +395,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("operation", nargs='+',
-                        help="Operation to be performed: vscode, build, flash, run, monitor, debug",
+                        help="Operation to be performed: vscode, build, flash, run, monitor, debug, list",
                         )
     parser.add_argument("-e", "--example",
                         help="Name of the example",
@@ -442,6 +444,9 @@ if __name__ == "__main__":
         if entry.is_dir() and exists(examples_root + entry.name + "/src"):
             examples.append(entry.name)
     examples.sort()
+	
+    if args.operation[0] == "list":
+        list(examples)
 
     read_settings()
     read_state()
