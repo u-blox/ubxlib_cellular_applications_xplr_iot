@@ -1,206 +1,71 @@
-# Learning by examples
+# ubxlib cellular applications for XPLR-IoT-1 development kit
+The purpose of this repository is to provide example applications which run on the XPLR-IoT-1 development kit. This repository is forked from the [ubxlib-examples-xplr-iot](https://github.com/u-blox/ubxlib_examples_xplr_iot) repository and is structured very much the same. A simple **do build** script is used to select the application to build and flash on to the XPLR-IoT-1 development kit.
 
-This repo is intended to be a starting point on learning how to use the u-blox open source library [ubxlib](https://github.com/u-blox/ubxlib). The intended target system here is the [XPLR-IOT-1](https://www.u-blox.com/en/product/XPLR-IOT-1) device but most of the examples are also applicable to
-any u-blox module or EVK supported by ubxlib.
+The [ubxlib-examples-xplr-iot](https://github.com/u-blox/ubxlib_examples_xplr_iot) project contains small examples for individual features of the ubxlib API, whereas this `cellular applications` project is for complete applications based on the ubxlib API.
 
-![ubxlib](readme_images/ubxlib-logo.png)
-![XPLR_IOT-1](readme_images/XPLR-IOT-1.png)
+Please see the [ubxlib-examples-xplr-iot](https://github.com/u-blox/ubxlib_examples_xplr_iot) repository for further information about this project.
 
-The main focus here is to make everything as uncomplicated as possible. The host mcu in an XPLR-IOT-1 device is the Nora-B1 with Nordic nRF5340. Unless you are familiar with the nRFConnect SDK and the Zephyr RTOS, the learning curve for mastering the development environment for this chip is quite steep. This repo tries to raise the abstraction layer and let you focus on the actual programming using ubxlib. Once started you can then dig into the more intricate parts of both ubxlib and Zephyr in your own pace.
+# Applications
+Currently this repository has only one application, the cellular tracking application. This application is described [here](applications/cellular_tracker/README.md).
 
-The interface to building, running and debug software for ubxlib can be either the command line or [Microsoft Visual Studio Code](https://code.visualstudio.com/).
+# Application framework
+The design of these applications is based around the same design. Each application has access to the following functions:
 
-Both Windows (Windows 10 tested) and Debian Linux (Ubuntu 20.04 tested) are supported.
+## Application tasks
+Each application is built from a number of `appTasks` which either run in their own loop thread or their event executed separately.
 
-There are two ways of using this repository depending on what you have installed on your PC.
+Each `appTask` is based on the same 'boiler plate' design.
+Each application task has a `taskMutex`, `taskEventQueue` and `taskHandler` which are provided by the UBXLIB API.
 
-If you already have the Nordic nRFConnect SDK installed and know how to use it, you can just clone this repository and go on from there directly. If the environment is installed in the standard location it will be detected automatically.
+The `main()` function simply runs the `appTask's` loop or commands an `appTaks` to run individually at certain timing, or possibly other events.
 
-    git clone --recursive https://github.com/u-blox/ubxlib_examples_xplr_iot
+## Task Event Queue
+Each `appTask` has an event queue for sending commands to it. The commands are listed in the `appTask's` .h file
 
-On the other hand if this is your first encounter with the Nordic nrf53 chipset and possibly also with git, a complete installation script which includes everything needed for development is provided. In this case [goto this page](install/README.md) for more information about the installation process.
+## MQTT communication
+Each `appTask` has a `/<IMEI>/<appTaskName>Control` topic where commands can be sent down to that `appTask`. Start, Stop task, measure 'now' etc.
 
-You can of course also install everything yourself following the instructions at the [Nordic web site](https://www.nordicsemi.com/Products/Development-software/nrf-connect-sdk). The repository has been tested with nRF Connect versions 1.7.0 up to 2.2.0. However some of the examples do require at least version 1.9.0.
+Each appTask can publish their data/information to the MQTT broker to their own specific topic. This topic is well defined, being `/<IMEI>/<appTaskName>`.
 
-It also works if you have your own tailored installation. You just have to specify where to find the nRFConnect environment parts. More about this below.
+## File Logging
+The framework contains a file logging system which can be read through the UART, and deleted.
 
-# Requirements
+## Booting options
+For debuggability purposes, it is possible to extract the file log execution if, during the device boot, the `Button #1` is pressed within 5 seconds from power ON. The log file can also be erased if the `Button #2` is pressed within 5 seconds from power ON. The LED will change colour from blue to green to display the log file, or red to show the log file has been deleted.
 
-To use this repo you need at least an XPLR-IOT-1 device. Please note though that this device doesn't contain any debug chip so in order to be able to do debugging you need to have some kind of debugger/programmer device. This would typically be a JLink debugger.
+NOTE: If you connect a terminal within the 3 seconds time of turning the device on (red LED), you will see some text remininding you about these button functions.
 
-You also need a 10 pin programmer cable to connect the XPLR-IOT-1 and the programmer. Example shown below:
+# Application tasks
+The structure of these applications is based around `appTasks`. These are tasks which are run in the background, measure and publish to their MQTT topic.
 
-![Jlink](readme_images/jlink.png)
+Please see [here](applications/tasks/README.md) for further information of each `appTask` currently implemented.
 
-However it is still possible to build and flash the examples into an XPLR-IOT-1 without a programmer. This is then made through a usb cable connected to the unit. No debugging is however possible in this case. Please note that this type of flashing requires the "newtmgr" program. This is installed automatically by the installation scripts of this repo, but if you have done a manual installation you have to add this manually as well and make sure it is in your path. It is available for download [from here](https://archive.apache.org/dist/mynewt/apache-mynewt-1.4.1)
+# Application Configuration
+Users need to modify the `src\configFile.h` file providing details of the MQTT broker to be used, and include this header file in the `src\config.h` header file. It is commented out normally as this file should /not/ be shared or committed to the repository.
+When this file is included the application will automatically save this file to the file system for later use. You can now delete/remove this file.
 
-Please note that the usb cable should also be inserted if you want to see printouts from the example programs.
+The `src\config.h` file also contains the APN which shall be updated accordingly for the SIM card used. Thingstream SIMs should have `TSIOT` configured for the APN.
 
-The actual flash process is different if you have a debuger unit or are just using the serial cable. In the first case everything is done automatically if the debug is connected to the XPLR-IOT-1. In the latter case manual interaction is needed. You must first turn off the XPLR-IOT-1 with its on/off button. Then press down button 1 on the top side of the unit and keep it pressed while turning on the device again. The unit is now in bootloader mode and the flashing process can begin. Flashing performed by this repository tools will prompt you for confirmation of that the unit is in bootloader mode before starting.
+In summary, to configure this application:-
 
-**Also please note** that by flashing these examples you will overwrite the "Sensor Aggregation" firmware which is installed in a fresh XPLR-IOT-1. Should you later want to restore that firmware, [this page](https://github.com/u-blox/XPLR-IOT-1-software) will show you how.
+ 1. Edit the `exampleConfigFile.h` file which describes the MQTT broken name or IP address and the username/password. Rename it something like `myConfigFile.h`
+ 2. #include this `myConfigFile.h` file in the `\src\config.h` file
+ 3. Compile and flash. When the application runs it will save this configuration information to the file system.
+ 4. Now delete the `myConfigFile.h` file, and comment out the #include for it. This is so it is not added  to the repository accidentially.
+ 5. Compile again and re-flash into the XPLR-IoT-1 device.
+ 6. The saved configuration will be loaded from the file system.
 
-The WiFi captive portal example requires ubxlib version 1.3 or later, to be released July 2023.
+# Application main()
+This is the starting point of the application. It will initialize the UBXLIB system and the device. It will also initialize the LEDS, FileSystem and check the log file.
 
-# Getting started
+Before running the application it will wait for either `Button #1` or `Button #2` to be pressed to display or delete the log file.
 
-Once you have everything installed and have connected your XPLR-IOT-1, you can start exploring the functionality of this repository.
+It will then load the configuration file for the MQTT credentials, and if there is the special `\src\configFile.h` file present, save that first to the file system.
 
-Begin by starting a command window. Then change working directory to where the repository was cloned. If you have used the installation script this will be in a directory underneath your home directory named xplriot1\ubxlib_examples_xplr_iot.
+After the main system is initialized it will initialize the application tasks. Here they will each create a Mutex and eventQueue. These can be used to know if the appTask is running something, and communicate a command to it.
 
-Please note that if you have installed the nRFConnect SDK via the "Toolchain Manager" desktop app you may have to start the command prompt via the corresponding entry in the dropdown list. This is the case if Python is not available in your standard path.
+Once all the application tasks are initialized the Registration and MQTT application tasks will `start()`. Here they will run their task loop, looking after the registration and MQTT broker connection.
 
-Then issue the following command:
+The main application loop will now simple request a SignalQuality measurement and a location update via their respected appTask eventQueues.
 
-Windows:
-
-    do vscode
-
-Linux:
-
-    ./do vscode
-
-This will execute a complete build of the simple blink example and then start Visual Studio Code.
-
-Once Visual Studio Code has started you will find the "main.c" source code in a window.
-
-From within Visual Studio Code you can then build, rebuild, flash and run the examples. This is done via selecting the menus *Terminal -> Run Build Task* or by pressing the shortcut *ctrl-shift-b*. Choose *Build and run "blink"* to flash and start the blink example and the red led of your XPLR-IOT-1 should start blinking.
-
-
-You can then select any of the other examples by choosing *Select Example* in the Build Task menu as above. After that you can select *Build and run* again.
-
-If you have a debug unit you can then also start a debugging session by first selecting the *Run and debug* icon in the left side pane.
-
-![debug icon](readme_images/debug-icon.png)
-
-Then select the green arrow in the top section and a debugging session will start.
-
-![debug start](readme_images/debug-arrow.png)
-
-The program will stop at the first line in the program. Experiment with the different debug functions in Visual Studio Code such as stepping, checking variables etc.
-
-You can then start modifying the examples to you liking or add your own, more about that further down.
-
-# Using the nRFConnect Visual Studio Code extension
-
-If you are used to using the nRFConnect Visual Studio Code extension and prefer to use it instead of the Visual Studio environment created by the *do* command, then that is of course also possible.
-
-In this case just open Visual Studio Code and then select *Add an existing application* in the nRF Connect extension. Browse to one of the example directory and choose open. Then do a *Add build configuration* in the normal way using the *nrf5340dk_nrf5340_cpuapp* as board. After that you can use the different operations available from the nRF Connect extension for building and debugging etc. You find all the used overlay and configuration files in the *config* directory of this repo. Please note that builds created this way will not use the bootloader.
-
-
-# Creating your own examples
-
-There are three ways you can experiment and create new example applications.
-
-* Edit the existing examples and rebuild.
-* Copy one existing example to the *playground* directory and edit and build from there. Everything added here will be excluded from git operations.
-* Create a directory outside of this repo and add a corresponding directory structure and source files there. If you then set the application directory as you default and start the *do* command from there it will pick up your example application instead of the ones in the repo.
-
-
-# Advanced usage
-
-All the operations performed in this repo are controlled by one central command named *do*. This command is executed as described above in a command window with the default directory set to the root of the repo.
-
-Below is the help information for the command as shown when issuing "do --help". More thorough description below.
-
-    usage: do [-h] [-e EXAMPLE] [-p] [--no-bootloader] [--when-changed] [-d BUILD_DIR]
-            [-n NCS_DIR] [-t GCC_DIR] [-u UBXLIB_DIR]
-            operation [operation ...]
-
-    positional arguments:
-    operation             Operation to be performed: vscode, build, flash, run, monitor, debug
-
-    optional arguments:
-    -h, --help            show this help message and exit
-    -e EXAMPLE, --example EXAMPLE
-                            Name of the example
-    -p, --pristine        Pristine build (rebuild)
-    --no-bootloader       Don't use the bootloader
-    --when-changed        Only flash when build was triggered
-    -d BUILD_DIR, --build-dir BUILD_DIR
-                            Root directory for the build output
-    -n NCS_DIR, --ncs-dir NCS_DIR
-                            Nrf connect sdk installation directory
-    -t GCC_DIR, --gcc-dir GCC_DIR
-                            GCC toolchain installation directory
-    -u UBXLIB_DIR, --ubxlib-dir UBXLIB_DIR
-                            Ubxlib directory
-
-The most typical operations are:
-
-| Operation      | Description |
-| ----------- | ----------- |
-| **build**  | Will perform a build of the selected example. Corresponding to "west build" |
-| **vscode**  | First do a build and then start Visual Studio Code |
-| **flash**  | Build and then flash the XPLR-IOT-1|
-| **monitor**  | Start a serial port viewer/input in the current terminal|
-| **run**  | A combined build-flash-monitor operation |
-| **debug**  | Starts command line debugging using gdb |
-
-These operations can also be started from within Visual Studio Code as described above.
-
-There are some options for the operations which can be specified. These can be temporary for the actual command or be saved as new defaults. In the latter case the operation "save" is used.
-
-The --example option is used to specify which example to build. If not specified the example used in latest previous run will be used. See the directory structure underneath the examples subdirectory for the names available. Example:
-
-    do build -e socket
-
-There will be a automatic search for examples among the directories so if you add your own that will be included as well in the list of choosables.
-
-### Directory specification
-
-There are some directories which are needed to be defined for the build process. These have default values depending on how the installation is made but can always be overridden by the options below:
-
-| Option      | Description |
-| ----------- | ----------- |
-| **--ncs-dir**  | The root directory for the nRF Connect SDK installation. If the default location (C:\ncs \| ~/ncs) is used the latest version will be found automatically and used. If another location should be used it can be specified here.|
-| **--gcc-dir**  | The directory for the GCC ARM compiler. If a default installation of nRFConnect is found as above the one here will be used. If another location should be used it can be specified here.|
-| **--build-dir**  | By default all produced files from the build will be placed in a subdirectory named "-build". Use this option to place it elsewhere.|
-| **--ubxlib-dir**  | By default the ubxlib version used is the one which is included as a submodule to this repo. This is possible to override with this option.|
-
-### Other options
-
-| Option      | Description |
-| ----------- | ----------- |
-| **--pristine**  | Force a complete rebuild|
-| **--when-changed**  | Only flash when a build was triggered|
-
-## The config directory ##
-
-This directory contains the specifics for handling the XPLR-IOT-1 in Zephyr.
-
-The files here are mainly overlay files used to override the specific settings for XPLR-IOT-1 when using the nrf5340dk board files.
-
-Here is also a c-file for defining the default gpio pins etc and setting them to enable the different u-blox modules automatically from ubxlib.
-
-There are some cmake variables you can define for controlling these files.
-
-| Variable      | Description |
-| ----------- | ----------- |
-| NO_SENSORS | When set i2c is not included in the build and this enables the use of all 4 uarts. This means that both the Nina W15 and the Sara R5 modules can be used at the same time |
-| EXT_FS | Enables use of a file system on the external SPI-flash memory. Used in the "filesystem" example|
-| NO_DEBUG | By default debug optimization is used for compilation. Set this variable to disable that|
-| ENABLE_LOGGING | Zephyr logging is disabled by default. Set this variable to enable it.
-
-### Bootloader
-
-By default the mcuboot bootloader which is available in a fresh XPLR-IOT-1 will be kept. If you don't want that then use the option:
-
-    --no-bootloader
-
-Should you later want to change this you can use the operation "flash_bootloader"
-
-### Network cpu
-
-The network cpu of the host nrf5340 is not used in most of the examples. However if the Bluetooth functionality is to be used in the host (and not in the Nina module), a firmware for the network cpu has to be built and flashed. The build is done automatically whenever the KConfig setting CONFIG_BT is set.
-
-To flash the built network cpu firmware the following command must be used after a successful build of the example:
-
-    do flash_net
-
-This is only required to be done once.
-
-Please note that this command will only work for examples that has defined CONFIG_BT. The current examples doing that are: ble_ibeacon_z, ble_scan_z and aoa_tag. In this case the command will be for ibeacon_z:
-
-    do flash_net -e ble_ibeacon_z
-
+The main application will terminate if `Button #1` is pressed, closing the MQTT broker connection, deregistering from the network, and closing the log file. It is important to close down the application by this method as otherwise the log file might not have been saved.
