@@ -19,6 +19,16 @@
  */
 void sensorsInit();
 
+/// @brief Gets the X, Y, Z acceleration.
+/// @return 0 on success, -1 on failure
+int32_t getAccelerometer(float *x, float *y, float *z);
+
+// void getPosition(float ax, float ay, float az, float *px, float *py, float *pz);
+
+/// @brief Gets the temperature, pressure and humidity
+/// @return 0 on success, -1 on failure
+int32_t getTempSensor(float *temp, float *pressure, float *humidity);
+
 /**
  * Get a string with environment sensor values
  */

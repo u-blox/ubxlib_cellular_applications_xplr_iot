@@ -14,18 +14,19 @@
  * limitations under the License.
  */
 
-#include <stdint.h>
-#include <stdbool.h>
-
-/** Initiate BLE for angle of arrival advertisements
- * @return       Success or failure.
+/*
+ *
+ * Task Control header
+ *
  */
-bool bleAoaInit();
 
-/** Start or stop angle of arrival advertisements
- * @param min_ms Minimum advertisement time in milliseconds.
- * @param max_ms Maximum advertisement time in milliseconds.
- * @param on     Start or stop.
- * @return       Success or failure.
- */
-bool bleAoaAdvertise(uint16_t min_ms, uint16_t max_ms, bool on);
+#ifndef _TASK_CONTROL_H_
+#define _TASK_CONTROL_H_
+
+int32_t initTasks();
+int32_t initSingleTask(taskTypeId_t id);
+int32_t runTask(taskTypeId_t id);
+void stopAndWait(taskTypeId_t id);
+void waitForTasksToStop(taskTypeId_t *taskIds, size_t numTasks);
+
+#endif

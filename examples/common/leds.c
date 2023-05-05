@@ -17,7 +17,7 @@
 
 #include <device.h>
 #include <drivers/gpio.h>
-#include <kernel.h>
+#include <zephyr.h>
 
 #include "leds.h"
 

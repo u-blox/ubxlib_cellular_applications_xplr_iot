@@ -33,13 +33,18 @@ if (NOT NO_SENSORS)
 endif()
 # And Zephyr
 find_package(Zephyr HINTS $ENV{ZEPHYR_BASE})
+
 # All example source code
 file(GLOB_RECURSE APP_SOURCES "${CMAKE_SOURCE_DIR}/src/*.c")
 target_sources(app PRIVATE ${APP_SOURCES})
-# And common utilities
+
+# ...common utilities
 file(REAL_PATH "${CMAKE_CURRENT_LIST_DIR}/common" APP_COMMON_DIR)
 file(GLOB APP_COMMONS "${APP_COMMON_DIR}/*.c")
-target_sources(app PRIVATE ${APP_COMMONS})
-target_include_directories(app PRIVATE ${APP_COMMON_DIR})
 
-zephyr_include_directories(${ZEPHYR_BASE}/include/zephyr)
+# ...and tasks
+file(REAL_PATH "${CMAKE_CURRENT_LIST_DIR}/tasks" APP_TASKS_DIR)
+file(GLOB APP_TASKS "${APP_TASKS_DIR}/*.c")
+
+target_sources(app PRIVATE ${APP_COMMONS} ${APP_TASKS})
+target_include_directories(app PRIVATE ${APP_COMMON_DIR} ${APP_TASKS_DIR})

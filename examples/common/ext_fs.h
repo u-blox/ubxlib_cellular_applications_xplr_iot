@@ -15,7 +15,7 @@
  */
 
 #include <fs/fs.h>
-#include <kernel.h>
+#include <zephyr.h>
 
 /**
  * Initiate little_fs on the external flash memory of the XPLR-IOT-1.
@@ -37,9 +37,9 @@ const char *extFsPath(const char *fileName);
 
 /**
  * Get the size of the free space on the file system in kB.
- * @return Actual free size or possible negative error code
+ * @return Actual free size.
  */
-int32_t extFsFree();
+unsigned long extFsFree();
 
 /**
  * Check if a file exists

@@ -44,15 +44,14 @@ const char *extFsPath(const char *fileName)
     return path;
 }
 
-int32_t extFsFree()
+unsigned long extFsFree()
 {
-    int32_t errorOrSize;
+    unsigned long free = 0;
     struct fs_statvfs sbuf;
-    errorOrSize = fs_statvfs(gMountPoint->mnt_point, &sbuf);
-    if (errorOrSize == 0) {
-        errorOrSize = sbuf.f_frsize * sbuf.f_bfree / 1024;
+    if (fs_statvfs(gMountPoint->mnt_point, &sbuf) == 0) {
+        free = sbuf.f_frsize * sbuf.f_bfree / 1024;
     }
-    return errorOrSize;
+    return free;
 }
 
 bool extFsFileExists(const char *fileName)

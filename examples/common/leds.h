@@ -22,6 +22,13 @@
 #define GREEN_LED 1
 #define BLUE_LED  2
 
+// basic led controls
+#define SET_WHITE_LED   ledSet(0, true); ledSet(1, true); ledSet(2, true)
+#define SET_RED_LED     ledSet(0, true); ledSet(1, false); ledSet(2, false)
+#define SET_GREEN_LED   ledSet(0, false); ledSet(1, true); ledSet(2, false)
+#define SET_BLUE_LED    ledSet(0, false); ledSet(1, false); ledSet(2, true)
+#define SET_NO_LEDS     ledSet(0, false); ledSet(1, false); ledSet(2, false)
+
 /** Initiate led handling. Performs led gpio setup.
  * @return     Success or failure.
  */

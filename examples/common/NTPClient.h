@@ -14,18 +14,10 @@
  * limitations under the License.
  */
 
-#include <stdint.h>
-#include <stdbool.h>
-
-/** Initiate BLE for angle of arrival advertisements
- * @return       Success or failure.
+/*
+ *
+ * NTP Client header
+ *
  */
-bool bleAoaInit();
 
-/** Start or stop angle of arrival advertisements
- * @param min_ms Minimum advertisement time in milliseconds.
- * @param max_ms Maximum advertisement time in milliseconds.
- * @param on     Start or stop.
- * @return       Success or failure.
- */
-bool bleAoaAdvertise(uint16_t min_ms, uint16_t max_ms, bool on);
+int64_t getNTPTime(void);

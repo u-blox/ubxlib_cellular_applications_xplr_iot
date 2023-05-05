@@ -21,7 +21,8 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <kernel.h>
+//#include <math.h>
+#include <zephyr.h>
 
 const struct device *gpBme280Dev;
 const struct device *gpLis2dhDev;
@@ -44,32 +45,81 @@ static char temp_buffer[100];
 static char acc_buffer[100];
 static char light_buffer[25];
 
-const char *pollTempSensor()
+int32_t getTempSensor(float *temp, float *pressure, float *humidity)
+{
+    if (gpBme280Dev && sensor_sample_fetch(gpBme280Dev) == 0) {
+        struct sensor_value tempVal, pressVal, humidityVal;
+        sensor_channel_get(gpBme280Dev, SENSOR_CHAN_AMBIENT_TEMP, &tempVal);
+        sensor_channel_get(gpBme280Dev, SENSOR_CHAN_PRESS, &pressVal);
+        sensor_channel_get(gpBme280Dev, SENSOR_CHAN_HUMIDITY, &humidityVal);
+
+        *temp = decodeVal(&tempVal);
+        *pressure = decodeVal(&pressVal) * 10;
+        *humidity = decodeVal(&humidityVal);
+
+        return 0;
+    }
+
+    return -1;
+}
+
+const char *pollTempSensor(void)
 {
     temp_buffer[0] = 0;
-    if (gpBme280Dev && sensor_sample_fetch(gpBme280Dev) == 0) {
-        struct sensor_value temp, press, humidity;
-        sensor_channel_get(gpBme280Dev, SENSOR_CHAN_AMBIENT_TEMP, &temp);
-        sensor_channel_get(gpBme280Dev, SENSOR_CHAN_PRESS, &press);
-        sensor_channel_get(gpBme280Dev, SENSOR_CHAN_HUMIDITY, &humidity);
+    float temp, pressure, humidity;
+
+    if (getTempSensor(&temp, &pressure, &humidity) == 0) {
         snprintf(temp_buffer, sizeof(temp_buffer),
                  "Temp: %.2f C, Press: %.2f hPa, Humidity: %.2f %%",
-                 decodeVal(&temp), decodeVal(&press) * 10, decodeVal(&humidity));
+                 temp, pressure, humidity);
     }
+
     return temp_buffer;
 }
 
-const char *pollAccelerometer()
+int32_t getAccelerometer(float *x, float *y, float *z)
 {
-    acc_buffer[0] = 0;
     if (gpLis2dhDev && sensor_sample_fetch(gpLis2dhDev) >= 0) {
         struct sensor_value accel[3];
         if (sensor_channel_get(gpLis2dhDev, SENSOR_CHAN_ACCEL_XYZ, accel) == 0) {
-            snprintf(acc_buffer, sizeof(acc_buffer),
-                     "Accel: X = %.3f g, Y = %.3f g, Z = %.3f g",
-                     decodeVal(&accel[0]) / 10, decodeVal(&accel[1]) / 10, decodeVal(&accel[2]) / 10);
+            *x = decodeVal(&accel[0]) / 10;
+            *y = decodeVal(&accel[1]) / 10;
+            *z = decodeVal(&accel[2]) / 10;
+
+            return 0;
         }
     }
+
+    return -1;
+}
+
+/*
+void getPosition(float ax, float ay, float az, float *px, float *py, float *pz)
+{
+    double xAngle = atan( (double)(ax / (sqrt(ay*ay + az*az))));
+    double yAngle = atan( (double)(ay / (sqrt(ax*ax + az*az))));
+    double zAngle = atan( (double)(sqrt(ax*ax + ay*ay) / az));
+
+    xAngle *= 180.00; yAngle *= 180.00; zAngle *= 180.00;
+    xAngle /= 3.141592; yAngle /= 3.141592; zAngle /= 3.141592;
+
+    *px = xAngle;
+    *py = yAngle;
+    *pz = zAngle;
+}
+*/
+
+const char *pollAccelerometer(void)
+{
+    float x, y, z;
+
+    acc_buffer[0] = 0;
+    if (getAccelerometer(&x, &y, &z) == 0)  {
+        snprintf(acc_buffer, sizeof(acc_buffer),
+                    "Accel: X = %.3f g, Y = %.3f g, Z = %.3f g",
+                    x, y, z);
+    }
+
     return acc_buffer;
 }
 
@@ -100,6 +150,7 @@ static int32_t convToLux(struct sensor_value *adc_val)
     } else {
         newval = 0;
     }
+
     return newval;
 }
 
@@ -111,6 +162,7 @@ int32_t getLightSensor()
         sensor_channel_get(gLtr303Dev, SENSOR_CHAN_LIGHT, &adc);
         luxVal = convToLux(&adc);
     }
+
     return luxVal;
 }
 

@@ -14,18 +14,22 @@
  * limitations under the License.
  */
 
-#include <stdint.h>
-#include <stdbool.h>
-
-/** Initiate BLE for angle of arrival advertisements
- * @return       Success or failure.
+/*
+ *
+ * Configuration File - for saving to the ConfigFile.txt file
+ *
+ * THIS MUST NOT BE CHECKED IN TO SOURCE CONTROL!!!
+ *
  */
-bool bleAoaInit();
 
-/** Start or stop angle of arrival advertisements
- * @param min_ms Minimum advertisement time in milliseconds.
- * @param max_ms Maximum advertisement time in milliseconds.
- * @param on     Start or stop.
- * @return       Success or failure.
- */
-bool bleAoaAdvertise(uint16_t min_ms, uint16_t max_ms, bool on);
+#ifndef _CONFIG_FILE_H_
+#define _CONFIG_FILE_H_
+
+// Simple way to create a text file which is saved to the file system
+#define CONFIG_FILE_CONTENTS "MQTT_BROKER_NAME:xxx.xxx.xxx.xxx\n" \
+                             "MQTT_BROKER_PORT:xxxx" \
+                             "MQTT_USERNAME:username\n" \
+                             "MQTT_PASSWORD:password\n" \
+                             "MQTT-TYPE:MQTT\n"
+
+#endif
