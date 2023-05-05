@@ -4,7 +4,12 @@ The purpose of this repository is to provide example applications which run on t
 The [ubxlib-examples-xplr-iot](https://github.com/u-blox/ubxlib_examples_xplr_iot) project contains small examples for individual features of the ubxlib API, whereas this `cellular applications` project is for complete applications based on the ubxlib API.
 
 # Applications
-Currently this repository has only one application, the cellular tracking application. This application is described [here](applications/cellular_tracker/README.md).
+(Currently this repository has only one application).
+
+* [Cellular Tracker](applications/cellular_tracker/README.md). 
+  Publishes cellular signal strength parameters and location. Can be controlled to publish Cell Query results (+COPS=?)
+
+* [...]()
 
 # Application framework
 The design of these applications is based around the same design. Each application has access to the following functions:
