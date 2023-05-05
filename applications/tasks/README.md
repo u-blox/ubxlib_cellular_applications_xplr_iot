@@ -1,7 +1,18 @@
 # Application Tasks
 This framework is based around a applications task which are responsible for certain requirements of the application. This could be measuring a sensor, registration management, cloud service communication, etc.
 
-## LED Task
+## OS features of each task
+### Event Queue
+Each `appTask` has an event queue for sending commands to it. The commands are listed in the `appTask's` .h file.
+
+### Mutex
+Each `appTask` has a mutex which is used to notify when a task is in operation, either a long running operation, or in its task loop.
+
+### Thread
+Each `appTask` has a task thread which is used for its loop function.
+
+# Implemented application tasks
+# LED Task
 This task monitors the gAppStatus variable and changes the LEDs to show the current state. As this is a running task all three LEDS can be blinked, flashed, turned on/off etc.
 
 The `gAppStatus` is based on an enumerator which inturn has it's own LED configuration for that status.
@@ -40,8 +51,8 @@ The event queue has a 10 message buffer. It will first check if `gIsNetworkUp` v
 
 The MQTT task will also monitor the broker connection, and if it goes down, it will try and re-connect automatically.
 
-# Sending commands down to the XPLR-IoT-1 device
-Application tasks have their own eventQueue. Commands can be sent to this eventQueue by other tasks. Application tasks also subscribe to a particular MQTT topic so they can listen to commands coming from the cloud. Each MQTT command topic starts with the \<IMEI> of the module and then "xxxControl" for that xxxTask.
+# Sending commands
+Application tasks subscribe to a particular MQTT topic so they can listen to commands coming from the cloud. Each MQTT command topic starts with the \<IMEI> of the module and then "xxxControl" for that xxxTask.
 
 ## Topic : /\<IMEI>/AppControl
  - SET_DWELL_TIME \<dwell time ms> : Sets the time between the main application requests for signal quality measurement+location

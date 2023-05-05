@@ -6,7 +6,7 @@ The [ubxlib-examples-xplr-iot](https://github.com/u-blox/ubxlib_examples_xplr_io
 # Applications
 (Currently this repository has only one application).
 
-* [Cellular Tracker](applications/cellular_tracker/README.md). 
+* [Cellular Tracker](applications/cellular_tracker).
   Publishes cellular signal strength parameters and location. Can be controlled to publish Cell Query results (+COPS=?)
 
 * [...]()
@@ -21,9 +21,6 @@ Each `appTask` is based on the same 'boiler plate' design.
 Each application task has a `taskMutex`, `taskEventQueue` and `taskHandler` which are provided by the UBXLIB API.
 
 The `main()` function simply runs the `appTask's` loop or commands an `appTaks` to run individually at certain timing, or possibly other events.
-
-## Task Event Queue
-Each `appTask` has an event queue for sending commands to it. The commands are listed in the `appTask's` .h file
 
 ## MQTT communication
 Each `appTask` has a `/<IMEI>/<appTaskName>Control` topic where commands can be sent down to that `appTask`. Start, Stop task, measure 'now' etc.
@@ -41,7 +38,7 @@ NOTE: If you connect a terminal within the 3 seconds time of turning the device 
 # Application tasks
 The structure of these applications is based around `appTasks`. These are tasks which are run in the background, measure and publish to their MQTT topic.
 
-Please see [here](applications/tasks/README.md) for further information of each `appTask` currently implemented.
+Please see [here](applications/tasks) for further information of each `appTask` currently implemented.
 
 # Application Configuration
 Users need to modify the `src\configFile.h` file providing details of the MQTT broker to be used, and include this header file in the `src\config.h` header file. It is commented out normally as this file should /not/ be shared or committed to the repository.
