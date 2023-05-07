@@ -21,6 +21,7 @@
  */
 
 #include "common.h"
+#include "taskControl.h"
 #include "cellScanTask.h"
 #include "mqttTask.h"
 

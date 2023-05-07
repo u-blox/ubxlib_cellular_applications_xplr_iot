@@ -22,6 +22,7 @@
  */
 
 #include "common.h"
+#include "taskControl.h"
 #include "sensorTask.h"
 #include "mqttTask.h"
 #include "sensors.h"

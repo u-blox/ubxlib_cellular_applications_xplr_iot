@@ -22,6 +22,7 @@
  */
 
 #include "common.h"
+#include "taskControl.h"
 #include "exampleTask.h"
 #include "mqttTask.h"
 // #include "otherheaders...h"

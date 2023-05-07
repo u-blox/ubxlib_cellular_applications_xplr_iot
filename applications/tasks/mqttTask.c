@@ -21,6 +21,7 @@
  */
 
 #include "common.h"
+#include "taskControl.h"
 #include "mqttTask.h"
 
 /* ----------------------------------------------------------------
@@ -271,21 +272,20 @@ cleanUp:
 /// @param msgSize the size of the message
 static void callbackTopic(size_t msgSize)
 {
+    int32_t errorCode = U_ERROR_COMMON_NOT_FOUND;
     for(int i=0; i<topicCallbackCount; i++) {
         if (strcmp(topicCallbackRegister[i]->topicName, topicString) == 0) {
-            int32_t errorCode = runCommandCallback(topicCallbackRegister[i]->callbacks,
+            errorCode = runCommandCallback(topicCallbackRegister[i]->callbacks,
                                                 topicCallbackRegister[i]->numCallbacks,
                                                 downlinkMessage,
                                                 msgSize);
-
-            if (errorCode == U_ERROR_COMMON_NOT_IMPLEMENTED)
-                printWarn("Topic command callback didn't recognise the message: %s", downlinkMessage);
-
-            return;
         }
     }
 
-    printWarn("Topic name not found in topic callback register: %s", topicString);
+    if (errorCode == U_ERROR_COMMON_NOT_FOUND)
+        printWarn("Topic name not found in topic callback register: %s", topicString);
+    else if (errorCode < 0)
+        printWarn("Topic command callback failed: %d", errorCode);
 }
 
 /// @brief Go through the number of messages we have to read and read them

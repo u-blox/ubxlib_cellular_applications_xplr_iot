@@ -37,7 +37,11 @@
 
 //#include "exampleConfigFile.h"
 
-
+/* ----------------------------------------------------------------
+ * DEBUG LEVEL SETTING - This can be changed remotely using
+ *                       "SET_LOG_LEVEL" command via the MQTT topic
+ * -------------------------------------------------------------- */
+#define LOGGING_LEVEL eINFO            // logLevels_t
 
 /* ----------------------------------------------------------------
  * DEFINITIONS

@@ -21,6 +21,7 @@
  */
 
 #include "common.h"
+#include "taskControl.h"
 #include "LEDTask.h"
 #include "leds.h"
 
@@ -46,19 +47,19 @@ static taskConfig_t *taskConfig = NULL;
 
 // Application Status is mapped to this LED configuration array
 ledAppState_t ledAppStatus[] = {
-    {MANUAL, {ledRedOff, ledGreenOff, ledBlueOff}},                   // MANUAL
-    {INIT_DEVICE, {ledRedFastPulse, ledGreenOff, ledBlueOff}},        // INIT_DEVICE
-    {REGISTERING, {ledRedOff, ledGreenOff, ledBlueBlink}},            // REGISTERING
-    {MQTT_CONNECTING, {ledRedOff, ledGreenPulse, ledBlueOff}},        // MQTT_CONNECTING
-    {COPS_QUERY, {ledRedOff, ledGreenPulse, ledBlueOn}},              // COPS_QUERY
-    {SEND_SIGNAL_QUALITY, {ledRedFlash, ledGreenFlash, ledBlueOff}},  // SEND_SIGNAL_QUALITY
-    {REGISTRATION_UNKNOWN, {ledRedOff, ledGreenOff, ledBlueFlash}},   // REGISTRATION_UNKNOWN
-    {REGISTERED, {ledRedOff, ledGreenOff, ledBlueOn}},                // REGISTERED
-    {ERROR, {ledRedOn, ledGreenOff, ledBlueOff}},                     // ERROR
-    {SHUTDOWN, {ledRedOn, ledGreenOn, ledBlueOn}},                    // SHUTDOWN
-    {MQTT_CONNECTED, {ledRedOff, ledGreenOn, ledBlueOff}},            // MQTT_CONNECTED
-    {MQTT_DISCONNECTED, {ledRedOff, ledGreenFlash, ledBlueOff}},      // MQTT_DISCONNECTED
-    {START_SIGNAL_QUALITY, {ledRedOn, ledGreenOn, ledBlueOff}},       // START_SIGNAL_QUALITY
+    {MANUAL, {ledRedOff, ledGreenOff, ledBlueOff}},
+    {INIT_DEVICE, {ledRedFastPulse, ledGreenOff, ledBlueOff}},
+    {REGISTERING, {ledRedOff, ledGreenOff, ledBlueBlink}},
+    {MQTT_CONNECTING, {ledRedOff, ledGreenPulse, ledBlueOff}},
+    {COPS_QUERY, {ledRedOff, ledGreenPulse, ledBlueOn}},
+    {SEND_SIGNAL_QUALITY, {ledRedFlash, ledGreenFlash, ledBlueOff}},
+    {REGISTRATION_UNKNOWN, {ledRedOff, ledGreenOff, ledBlueFlash}},
+    {REGISTERED, {ledRedOff, ledGreenOff, ledBlueOn}},
+    {ERROR, {ledRedOn, ledGreenOff, ledBlueOff}},
+    {SHUTDOWN, {ledRedOn, ledGreenOn, ledBlueOn}},
+    {MQTT_CONNECTED, {ledRedOff, ledGreenOn, ledBlueOff}},
+    {MQTT_DISCONNECTED, {ledRedOff, ledGreenFlash, ledBlueOff}},
+    {START_SIGNAL_QUALITY, {ledRedOn, ledGreenOn, ledBlueOff}},
 };
 
 /* ----------------------------------------------------------------
@@ -85,7 +86,7 @@ ledCfg_t *getAppStatusLEDs()
 static void taskLoop(void *pParameters)
 {
     U_PORT_MUTEX_LOCK(TASK_MUTEX);
-    while(!exitTask) {
+    while(!gExitApp && !exitTask) {
         int priorityLED = -1;
 
         // grab the leds for this app status

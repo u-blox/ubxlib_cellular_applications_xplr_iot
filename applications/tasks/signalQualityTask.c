@@ -21,6 +21,7 @@
  */
 
 #include "common.h"
+#include "taskControl.h"
 #include "signalQualityTask.h"
 #include "mqttTask.h"
 

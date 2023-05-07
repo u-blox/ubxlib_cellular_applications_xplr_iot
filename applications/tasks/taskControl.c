@@ -20,7 +20,7 @@
 
 #include "common.h"
 #include "leds.h"
-
+#include "taskControl.h"
 #include "LEDTask.h"
 #include "mqttTask.h"
 #include "registrationTask.h"
@@ -36,36 +36,36 @@ static void setRedLED(void *param);
 // Here we specify what tasks are to run, and what configuration they are to use
 taskRunner_t taskRunners[] = {
     // Registration - Looks after the cellular registration process
-    {initNetworkRegistrationTask, startNetworkRegistrationTaskLoop, stopNetworkRegistrationTaskLoop,
-            {NETWORK_REG_TASK, "Registration", 30, false, {NULL, NULL, U_ERROR_COMMON_UNKNOWN}, setRedLED}},
+    {initNetworkRegistrationTask, startNetworkRegistrationTaskLoop, stopNetworkRegistrationTaskLoop, true,
+            {NETWORK_REG_TASK, "Registration", 30, false, BLANK_TASK_HANDLES, setRedLED}},
 
     // CellScan - Performs the +COPS=? Query for seeing what cells are available and publishes the results
-    {initCellScanTask, startCellScanTaskLoop, stopCellScanTask,
-            {CELL_SCAN_TASK, "CellScan", -1, false, {NULL, NULL, U_ERROR_COMMON_UNKNOWN}, NULL}},
+    {initCellScanTask, startCellScanTaskLoop, stopCellScanTask, false,
+            {CELL_SCAN_TASK, "CellScan", -1, false, BLANK_TASK_HANDLES, NULL}},
 
     // MQTT - Handles the MQTT broker connection, publishing messages and handling downlink messages
-    {initMQTTTask, startMQTTTaskLoop, stopMQTTTaskLoop,
-            {MQTT_TASK, "MQTT", 30, false, {NULL, NULL, U_ERROR_COMMON_UNKNOWN}, NULL}},
+    {initMQTTTask, startMQTTTaskLoop, stopMQTTTaskLoop, false,
+            {MQTT_TASK, "MQTT", 30, false, BLANK_TASK_HANDLES, NULL}},
 
     // SignalQuality - Measures the Signal Quality and other network parameters and publishes the results
-    {initSignalQualityTask, startSignalQualityTaskLoop, stopSignalQualityTaskLoop,
-            {SIGNAL_QUALITY_TASK, "SignalQuality", 30, false, {NULL, NULL, U_ERROR_COMMON_UNKNOWN}, NULL}},
+    {initSignalQualityTask, startSignalQualityTaskLoop, stopSignalQualityTaskLoop, false,
+            {SIGNAL_QUALITY_TASK, "SignalQuality", 30, false, BLANK_TASK_HANDLES, NULL}},
 
     // LED - Handles the flashing of the LEDS depending on the AppStatus global variable
-    {initLEDTask, startLEDTaskLoop, stopLEDTaskLoop,
-            {LED_TASK, "LED", -1, false, {NULL, NULL, U_ERROR_COMMON_UNKNOWN}, setRedLED}},
+    {initLEDTask, startLEDTaskLoop, stopLEDTaskLoop, false,
+            {LED_TASK, "LED", -1, false, BLANK_TASK_HANDLES, setRedLED}},
 
     // Example - Simple example task that does "nothing"
-    {initExampleTask, startExampleTaskLoop, stopExampleTaskLoop,
-            {EXAMPLE_TASK, "Example", 30, false, {NULL, NULL, U_ERROR_COMMON_UNKNOWN}, NULL}},
+    {initExampleTask, startExampleTaskLoop, stopExampleTaskLoop, false,
+            {EXAMPLE_TASK, "Example", 30, false, BLANK_TASK_HANDLES, NULL}},
 
     // Location - Periodically gets the GNSS location of the device and publishes the results
-    {initLocationTask, startLocationTaskLoop, stopLocationTaskLoop,
-            {LOCATION_TASK, "Location", 30, false, {NULL, NULL, U_ERROR_COMMON_UNKNOWN}, NULL}},
+    {initLocationTask, startLocationTaskLoop, stopLocationTaskLoop, false,
+            {LOCATION_TASK, "Location", 30, false, BLANK_TASK_HANDLES, NULL}},
 
     // Sensor - Measures the sensor parameters and publishes the results
-    {initSensorTask, startSensorTaskLoop, stopSensorTaskLoop,
-            {SENSOR_TASK, "Sensor", 30, false, {NULL, NULL, U_ERROR_COMMON_UNKNOWN}, NULL}}
+    {initSensorTask, startSensorTaskLoop, stopSensorTaskLoop, false,
+            {SENSOR_TASK, "Sensor", 30, false, BLANK_TASK_HANDLES, NULL}}
 };
 
 static void setRedLED(void *param)
@@ -75,7 +75,7 @@ static void setRedLED(void *param)
 
 static taskRunner_t *getTaskRunner(taskTypeId_t id)
 {
-    for(size_t i=0; i<MAX_TASKS; i++) {
+    for(size_t i=0; i<NUM_ELEMENTS(taskRunners); i++) {
         if (taskRunners[i].config.id == id)
             return &taskRunners[i];
     }
@@ -92,7 +92,7 @@ static taskConfig_t *getTaskConfig(taskTypeId_t id)
 }
 
 /// @brief Checks the "isTaskRunningxxxx()" functions and returns when the tasks have all stopped.
-void waitForTasksToStop(taskTypeId_t *taskIds, size_t numTasks)
+void waitForAllTasksToStop()
 {
     bool stillWaiting;
 
@@ -101,14 +101,9 @@ void waitForTasksToStop(taskTypeId_t *taskIds, size_t numTasks)
     {
         stillWaiting = false;
 
-        for(int i=0; i<numTasks; i++) {
-            taskRunner_t *taskRunner = getTaskRunner(taskIds[i]);
-            if (taskRunner == NULL) {
-                printLog("task runner was null?");
-                continue;
-            }
-
-            if (isMutexLocked(taskRunner->config.handles.mutexHandle)) {
+        for(int i=0; i<NUM_ELEMENTS(taskRunners); i++) {
+            taskRunner_t *taskRunner = &taskRunners[i];
+            if (!taskRunner->explicit_stop && isMutexLocked(taskRunner->config.handles.mutexHandle)) {
                 writeLog("...still waiting for %s task to finish", taskRunner->config.name);
                 stillWaiting = true;
             }
@@ -117,11 +112,9 @@ void waitForTasksToStop(taskTypeId_t *taskIds, size_t numTasks)
             // any debug information while they exit/unlock the mutex
             uPortTaskBlock(50);
         }
-
-        uPortTaskBlock(2000);
     } while (stillWaiting);
 
-    writeLog("All tasks are now finished...");
+    writeLog("All tasks have now finished...");
 }
 
 /// @brief Blocking function while waiting for the task to finish
@@ -168,8 +161,6 @@ void stopAndWait(taskTypeId_t id)
 
 int32_t initSingleTask(taskTypeId_t id)
 {
-    int32_t errorCode;
-
     taskRunner_t *taskRunner = getTaskRunner(id);
     if (taskRunner == NULL) {
         printError("Task Runner is NULL!");
@@ -179,7 +170,7 @@ int32_t initSingleTask(taskTypeId_t id)
     taskConfig_t *taskConfig = &taskRunner->config;
 
     if (!taskConfig->initialised) {
-        errorCode = taskRunner->initFunc(taskConfig);
+        int32_t errorCode = taskRunner->initFunc(taskConfig);
         if (errorCode < 0) {
             writeFatal("* Failed to initialise the %s task (%d)", taskConfig->name, errorCode);
             return errorCode;
@@ -228,6 +219,25 @@ int32_t runTask(taskTypeId_t id)
     return errorCode;
 }
 
+/// @brief Waits for a period of time and exits if the task is requested to exit/stop
+/// @param taskConfig The task configuration that holds the dwell time
+/// @param exitFunc The function that checks if the task should exit/stop
+void dwellTask(taskConfig_t *taskConfig, bool (*canDoDwell)(void))
+{
+    // Always do a task block to give other tasks a run
+    uPortTaskBlock(100);
+
+    writeDebug("%s dwelling for %d seconds...", taskConfig->name, taskConfig->taskLoopDwellTime);
+
+    // multiply by 10 as the TaskBlock is 100ms
+    int32_t count = taskConfig->taskLoopDwellTime * 10;
+    int i = 0;
+    do {
+        uPortTaskBlock(100);
+        i++;
+    } while (canDoDwell() && i < count);
+}
+
 /// @brief Sends a task a message via its event queue
 /// @param taskId The TaskId (based on the taskTypeId_t)
 /// @param message pointer to the message to send
@@ -235,28 +245,23 @@ int32_t runTask(taskTypeId_t id)
 /// @return 0 on success, negative on failure
 int32_t sendAppTaskMessage(int32_t taskId, void *pMessage, size_t msgSize)
 {
-    if (taskId < 0 || taskId >= MAX_TASKS) {
-        printError("Send App Task [%d] Message Error: Invalid Task Id", taskId);
-        return -1;
-    }
-
     taskConfig_t *taskConfig = getTaskConfig(taskId);
     if (taskConfig == NULL) {
         printError("Failed to find task Id #%d", taskId);
-        return -1;
+        return U_ERROR_COMMON_NOT_FOUND;
     }
 
     // if the mutex or queue handle is not valid, don't queue a message
     if (!taskConfig->initialised) {
         printError("%s queue/task is not initialised, not queueing command", taskConfig->name);
-        return -1;
+        return U_ERROR_COMMON_NOT_INITIALISED;
     }
 
     int32_t errorCode = uPortEventQueueSendIrq(taskConfig->handles.eventQueueHandle, pMessage, msgSize);
     if (errorCode < 0) {
         // this is a debug message because this will only error if there is no room on the queue, but that
         // isn't an error, it's just what can happen.
-        writeDebug("SendAppTaskMessage(): Message Error: Can't send message to %s task event queue: %d", taskConfig->name, errorCode);
+        writeDebug("SendAppTaskMessage(): %s task event queue probably full", taskConfig->name);
     }
 
     return errorCode;

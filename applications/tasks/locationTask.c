@@ -23,6 +23,7 @@
 #include <time.h>
 
 #include "common.h"
+#include "taskControl.h"
 #include "locationTask.h"
 #include "mqttTask.h"
 

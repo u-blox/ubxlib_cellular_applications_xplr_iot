@@ -170,25 +170,6 @@ void getTimeStamp(char *timeStamp)
     }
 }
 
-/// @brief Waits for a period of time and exits if the task is requested to exit/stop
-/// @param taskConfig The task configuration that holds the dwell time
-/// @param exitFunc The function that checks if the task should exit/stop
-void dwellTask(taskConfig_t *taskConfig, bool (*canDoDwell)(void))
-{
-    // Always do a task block to give other tasks a run
-    uPortTaskBlock(100);
-
-    writeDebug("%s dwelling for %d seconds...", taskConfig->name, taskConfig->taskLoopDwellTime);
-
-    // multiply by 10 as the TaskBlock is 100ms
-    int32_t count = taskConfig->taskLoopDwellTime * 10;
-    int i = 0;
-    do {
-        uPortTaskBlock(100);
-        i++;
-    } while (canDoDwell() && i < count);
-}
-
 void runTaskAndDelete(void *pParams)
 {
     void (*func)(void) = pParams;
