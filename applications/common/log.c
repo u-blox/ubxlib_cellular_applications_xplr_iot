@@ -210,10 +210,6 @@ void displayFileSpace(const char *pFilename)
     const char *path = extFsPath(pFilename);
     if (extFsFileSize(path, &fileSize)) {
         printLog("Log file size: %u bytes", fileSize);
-
-        // round up to next %
-        int32_t ratio = ((100.0 * fileSize) / freeSpace + 0.5);
-        printLog("Log file ratio: %d%%", ratio);
     }
 }
 

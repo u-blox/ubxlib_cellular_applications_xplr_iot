@@ -16,7 +16,7 @@
 
 #include "common.h"
 #include "taskControl.h"
-
+#include "cellInit.h"
 #include "config.h"
 #include "ext_fs.h"
 #include "leds.h"
@@ -130,12 +130,7 @@ static void button_pressed(int buttonNo, uint32_t holdTime)
 
         switch (buttonNo) {
             case BUTTON_1:
-                if (holdTime > 5000) {
-                    writeLog("Fast exit requested - closing log now! Please wait for the RED LED to go out...");
-                    gExitFast = true;
-                } else {
-                    writeLog("Exit button pressed, closing down... Please wait for the RED LED to go out...");
-                }
+                writeLog("Exit button pressed, closing down... Please wait for the RED LED to go out...");
                 gExitApp = true;
                 break;
 
@@ -246,7 +241,7 @@ int32_t initCellularDevice(void)
         return errorCode;
     }
 
-    return 0;
+    return configureCellularModule();
 }
 
 /// @brief Initialises the XPLR device LEDs, Buttons and file system and handles the startup button press
@@ -315,26 +310,17 @@ void finalise(applicationStates_t appState)
     gAppStatus = appState;
     gExitApp = true;
 
-    // if we don't want a fast shutdown, be nice and close down
-    // each appTask and wait for them to finish
-    //if (!gExitFast)
-    {
-        waitForAllTasksToStop();
+    waitForAllTasksToStop();
 
-        // now stop the network registration task. Blue LED
-        SET_BLUE_LED;
-        stopAndWait(NETWORK_REG_TASK);
-    }
+    // now stop the network registration task. Blue LED
+    SET_BLUE_LED;
+    stopAndWait(NETWORK_REG_TASK);
 
-    // stop the schedular, we're done!
-    Z_SECTION_LOCK
-        closeLog();
+    closeLog();
+    uPortDeinit();
 
-        uPortDeinit();
-
-        SET_NO_LEDS;
-        printLog("XPLR App has finished.");
-    Z_SECTION_UNLOCK
+    SET_NO_LEDS;
+    printLog("XPLR App has finished.");
 
     while(true);
 }

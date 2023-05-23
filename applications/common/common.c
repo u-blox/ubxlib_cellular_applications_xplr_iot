@@ -172,8 +172,12 @@ void getTimeStamp(char *timeStamp)
 
 void runTaskAndDelete(void *pParams)
 {
-    void (*func)(void) = pParams;
-    func();
+    if (pParams != NULL) {
+        void (*func)(void) = pParams;
+        func();
+    } else {
+        writeWarn("No Task to run!");
+    }
 
     uPortTaskDelete(NULL);
     uPortTaskBlock(2);

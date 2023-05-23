@@ -29,7 +29,8 @@
  * -------------------------------------------------------------- */
 #define FILE_READ_BUFFER 50
 
-#define CONFIG_DELIMITERS " :\n"
+// delimiters are ' ' (space) and '\n' (newline)
+#define CONFIG_DELIMITERS " \n"
 
 /* ----------------------------------------------------------------
  * TYPE DEFINITIONS
@@ -88,12 +89,15 @@ static size_t parseConfiguration(appConfigList_t **head)
 static void printConfiguration(void)
 {
     size_t count=1;
-    printLog("\n--- CONFIGURATION ------------------------------------------");
+    printLog("\n--- MQTT Credentials ------------------------------------------");
     appConfigList_t *kvp = configList;
+    char *value;
 
     while(kvp != NULL) {
-        printLog("   Key #%d: %s, Value #%d: %s",
-                count, kvp->key, count, getConfig(kvp->key));
+        value = getConfig(kvp->key);
+        if (value==NULL) value = "N/A";
+        printLog("   Key #%d: %s = %s",
+                count, kvp->key, value);
 
         kvp = kvp->pNext;
         count++;
@@ -114,7 +118,7 @@ int32_t saveConfigFile(const char *filename)
     int32_t success;
     int32_t errorCode = U_ERROR_COMMON_SUCCESS;
 
-    if (CONFIG_FILE_CONTENTS == NULL) {
+    if (MQTT_CREDENTIALS == NULL) {
         writeDebug("No configuration file to save to file system");
         return U_ERROR_COMMON_NOT_FOUND;
     }
@@ -136,8 +140,8 @@ int32_t saveConfigFile(const char *filename)
         return U_ERROR_COMMON_DEVICE_ERROR;
     }
 
-    size_t configFileSize = sizeof(CONFIG_FILE_CONTENTS);
-    int32_t count = fs_write(&configFile, CONFIG_FILE_CONTENTS, configFileSize);
+    size_t configFileSize = sizeof(MQTT_CREDENTIALS);
+    int32_t count = fs_write(&configFile, MQTT_CREDENTIALS, configFileSize);
     if (count != configFileSize) {
         if (count < 0)
             writeError("Failed to write configuration file. Error: %d", count);
@@ -216,7 +220,10 @@ char *getConfig(const char *key)
 {
     for(appConfigList_t *kvp = configList; kvp != NULL; kvp=kvp->pNext) {
         if (strcmp(kvp->key, key) == 0) {
-            return kvp->value;
+            if (strcmp(kvp->value, "NULL") == 0)
+                return NULL;
+            else
+                return kvp->value;
         }
     }
 

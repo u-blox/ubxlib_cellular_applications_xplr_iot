@@ -81,13 +81,14 @@ static void measureSignalQuality(void)
     int32_t errorCode;
 
     U_PORT_MUTEX_LOCK(TASK_MUTEX);
+
+    printLog("Fetching signal quality measurements...");
+
     SET_APP_STATUS(START_SIGNAL_QUALITY);
 
     char timestamp[TIMESTAMP_MAX_LENTH_BYTES];
-    Z_SECTION_LOCK
-        getTimeStamp(timestamp);
-        errorCode = uCellInfoRefreshRadioParameters(gDeviceHandle);
-    Z_SECTION_UNLOCK
+    getTimeStamp(timestamp);
+    errorCode = uCellInfoRefreshRadioParameters(gDeviceHandle);
 
     if (errorCode == 0) {
         int32_t rsrp = uCellInfoGetRsrpDbm(gDeviceHandle);

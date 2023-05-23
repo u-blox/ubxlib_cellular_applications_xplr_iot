@@ -55,10 +55,6 @@
  */
 #define TIMESTAMP_MAX_LENTH_BYTES 13
 
-// Lock the zephyr scheduler to allow atomic sections
-#define Z_SECTION_LOCK      k_sched_lock(); {
-#define Z_SECTION_UNLOCK    } k_sched_unlock();
-
 /* ----------------------------------------------------------------
  * PUBLIC TYPE DEFINITIONS
  * -------------------------------------------------------------- */

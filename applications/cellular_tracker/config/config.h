@@ -21,21 +21,21 @@
  *      MQTT credentials (in another #include)
  *
  *      Cellular APN
- *      Cellular URAT
+ *      Cellular MNO Profile, URAT
  *
  */
 
 /* This is the configuration file for the MQTT credentials
- If this include file is included this data will be saved as
+ If this include file is included its data will be saved as
  a 'configuration file' to be used later.
 
- Compile with the configFile.h included, run and it will be
+ Compile with the mqtt_credentials.h included, and it will be
  automatically saved to the file system to be used again.
- You can now delete/remove/comment out the configFile.h so
- that it is not saved to the repository.
+ You can then delete/remove/comment out this #include so
+ that it is not saved to the repository :)
  */
 
-//#include "exampleConfigFile.h"
+#include "mqtt_credentials.h"
 
 /* ----------------------------------------------------------------
  * DEBUG LEVEL SETTING - This can be changed remotely using
@@ -48,8 +48,13 @@
  * -------------------------------------------------------------- */
 #define APN "TSIOT"
 
-// This is set to NULL if the configFile.h is not present, and
-// therefore no 'configuration file' is saved to the file system
-#ifndef _CONFIG_FILE_H_
-#define CONFIG_FILE_CONTENTS NULL
+// Use the RAT enum from the UBXLIB uCellNetRat_t list.
+#define URAT U_CELL_NET_RAT_CATM1
+
+// Standard Europe MNO profile
+#define MNO_PROFILE 100
+
+// This is set to NULL if the mqtt_credentials.h is not #included above
+#ifndef _MQTT_CREDENTIALS_H_
+#define MQTT_CREDENTIALS NULL
 #endif

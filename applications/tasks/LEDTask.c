@@ -108,18 +108,16 @@ static void taskLoop(void *pParameters)
         }
 
         // Set each LED state, priority LED overriding others.
-        Z_SECTION_LOCK
-            for(int l = 0; l < MAX_LEDS; l++) {
-                ledCfg_t *led = &leds[l];
-                if (priorityLED == -1)
-                    ledSet(led->n, led->state);
+        for(int l = 0; l < MAX_LEDS; l++) {
+            ledCfg_t *led = &leds[l];
+            if (priorityLED == -1)
+                ledSet(led->n, led->state);
+            else
+                if (priorityLED == led->n)
+                    ledSet(led->n, true);
                 else
-                    if (priorityLED == led->n)
-                        ledSet(led->n, true);
-                    else
-                        ledSet(led->n, false);
-            }
-        Z_SECTION_UNLOCK
+                    ledSet(led->n, false);
+        }
 
         uPortTaskBlock(ledTick_ms);
     }

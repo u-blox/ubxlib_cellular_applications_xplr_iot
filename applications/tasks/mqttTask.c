@@ -138,11 +138,18 @@ static void downlinkMessageCallback(int32_t msgCount, void *param)
 static int32_t connectBroker(void)
 {
     gAppStatus = MQTT_CONNECTING;
-    writeLog("Connecting to MQTT Broker...");
+
+    bool mqttSN = strcmp(getConfig("MQTT-TYPE"), "MQTT-SN") == 0;
+    if (mqttSN)
+        writeLog("Connecting to MQTT-SN gateway...");
+    else
+        writeLog("Connecting to MQTT Broker...");
+
     uMqttClientConnection_t connection = U_MQTT_CLIENT_CONNECTION_DEFAULT;
     connection.pBrokerNameStr = getConfig("MQTT_BROKER_NAME");
     connection.pUserNameStr = getConfig("MQTT_USERNAME");
     connection.pPasswordStr = getConfig("MQTT_PASSWORD");
+    connection.mqttSn = mqttSN;
     connection.inactivityTimeoutSeconds = 0; // zero = no timeout
     connection.keepAlive = false;
 
@@ -333,14 +340,12 @@ static void taskLoop(void *pParameters)
     }
 
     // Application exiting, so disconnect from MQTT Broker...
-    Z_SECTION_LOCK
-        disconnectBroker();
-        uMqttClientClose(pContext);
+    disconnectBroker();
+    uMqttClientClose(pContext);
 
-        freeCallbacks();
-        uPortFree(downlinkMessage);
-        downlinkMessage = NULL;
-    Z_SECTION_UNLOCK
+    freeCallbacks();
+    uPortFree(downlinkMessage);
+    downlinkMessage = NULL;
 
     U_PORT_MUTEX_UNLOCK(TASK_MUTEX);
     FINALISE_TASK;
@@ -432,12 +437,10 @@ static void subscribeToTopic(void *pParam)
         goto cleanUp;
     }
 
-    Z_SECTION_LOCK
-        writeLog("Subscribed to callback topic: %s", topicCallback->topicName);
-        printLog("With these commands:");
-        for(int i=0; i<topicCallback->numCallbacks; i++)
-            printLog("%s", topicCallback->callbacks[i].command);
-    Z_SECTION_UNLOCK
+    writeLog("Subscribed to callback topic: %s", topicCallback->topicName);
+    printLog("With these commands:");
+    for(int i=0; i<topicCallback->numCallbacks; i++)
+        printLog("%s", topicCallback->callbacks[i].command);
 
 cleanUp:
     uPortTaskDelete(NULL);

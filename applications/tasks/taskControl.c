@@ -104,14 +104,12 @@ void waitForAllTasksToStop()
         for(int i=0; i<NUM_ELEMENTS(taskRunners); i++) {
             taskRunner_t *taskRunner = &taskRunners[i];
             if (!taskRunner->explicit_stop && isMutexLocked(taskRunner->config.handles.mutexHandle)) {
-                writeLog("...still waiting for %s task to finish", taskRunner->config.name);
+                printLog("...still waiting for %s task to finish", taskRunner->config.name);
                 stillWaiting = true;
             }
-
-            // give some time for the other tasks to print out
-            // any debug information while they exit/unlock the mutex
-            uPortTaskBlock(50);
         }
+
+        uPortTaskBlock(100);
     } while (stillWaiting);
 
     writeLog("All tasks have now finished...");

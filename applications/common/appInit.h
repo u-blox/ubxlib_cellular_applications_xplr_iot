@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+
+#ifndef _APP_INIT_H_
+#define _APP_INIT_H_
+
 int32_t getSerialNumber(void);
 
 int32_t initCellularDevice(void);
@@ -25,3 +29,5 @@ int32_t setAppLogLevel(commandParamsList_t *params);
 
 bool startupFramework(void);
 void finalise(applicationStates_t appState);
+
+#endif

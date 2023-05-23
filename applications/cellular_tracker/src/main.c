@@ -45,7 +45,6 @@ static callbackCommand_t callbacks[] = {
 /// @brief Main entry to the application.
 /// If Button 1 is held, the log file is displayed.
 /// If Button 2 is held, the log file is deleted.
-/// In both cases, the application starts as normal after.
 void main(void)
 {
     if (!startupFramework())
@@ -62,7 +61,7 @@ void main(void)
         dwellAppLoop();
 
         // exercise task operations
-        if (gAppStatus != COPS_QUERY) {
+        if (!gExitApp && gAppStatus != COPS_QUERY) {
             queueMeasureNow(NULL);
             queueLocationNow(NULL);
         }
