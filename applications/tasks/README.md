@@ -78,7 +78,7 @@ Application tasks subscribe to a particular MQTT topic so they can listen to com
  - STOP_TASK : Stops the task loop
 
 ## Topic : /\<IMEI>/SensorsControl
- - LOCATION_NOW : Request a location measurement to be made now and published to the cloud via MQTT
+ - MEASURE_NOW : Request a sensor measurement to be made now and published to the cloud via MQTT
  - START_TASK \[dwell time seconds] : Starts the task loop with the specified dwell time, or uses the default if missing
  - STOP_TASK : Stops the task loop
 
