@@ -44,9 +44,13 @@ typedef enum {
     SEND_MQTT_MESSAGE,          // Sends a MQTT message
 } mqttMsgType_t;
 
-/// @brief MQTT message to send
+/// @brief MQTT message to send. Handles both MQTT and MQTT-SN topic name types
 typedef struct SEND_MQTT_MESSAGE {
-    char *pTopicName;
+    union {
+        char *pTopicName;
+        uMqttSnTopicName_t *pShortName;
+    } topic;
+
     char *pMessage;
     uMqttQos_t QoS;
     bool retain;

@@ -133,6 +133,7 @@ extern int64_t unixNetworkTime;
  * -------------------------------------------------------------- */
 bool isMutexLocked(uPortMutexHandle_t mutex);
 char *uStrDup(const char *src);
+void *uMemDup(const void *data, size_t len);
 
 int32_t sendAppTaskMessage(int32_t taskId, void *pMessage, size_t msgSize);
 

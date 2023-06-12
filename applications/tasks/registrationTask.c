@@ -110,6 +110,16 @@ static void networkStatusCallback(uDeviceHandle_t devHandle,
         gAppStatus = REGISTRATION_UNKNOWN;
 }
 
+static bool usingRestrictedAPN(void)
+{
+    for(int i=0; i<NUM_ELEMENTS(restrictedAPNList); i++) {
+        if (strcmp(restrictedAPNList[i], APN) == 0)
+            return true;
+    }
+
+    return false;
+}
+
 static void getNetworkOrNTPTime(void)
 {
     // try and get the network time from the cellular network
@@ -118,7 +128,12 @@ static void getNetworkOrNTPTime(void)
     // if the network time is less than 2023, assume it is wrong
     // and get the time from NTP service
     if (time < BEGINNING_2023) {
-        time = getNTPTime();
+        if (usingRestrictedAPN()) {
+            writeWarn("Can't get NTP Time as we are on a restricted APN");
+            return;
+        } else {
+            time = getNTPTime();
+        }
     }
 
     // if time is positive, it should be now a valid time

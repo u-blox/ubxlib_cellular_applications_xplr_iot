@@ -51,6 +51,8 @@ The event queue has a 10 message buffer. It will first check if `gIsNetworkUp` v
 
 The MQTT task will also monitor the broker connection, and if it goes down, it will try and re-connect automatically.
 
+The API for this TASK only requires a MQTT or MQTT-SN flag to be set in the mqtt_credentials configuration file found in the application's config folder. The "short names" found in MQTT-SN are automatically handled.
+
 # Sending commands
 Application tasks subscribe to a particular MQTT topic so they can listen to commands coming from the cloud. Each MQTT command topic starts with the \<IMEI> of the module and then "xxxControl" for that xxxTask.
 

@@ -23,10 +23,28 @@
 #define _REGISTRATION_TASK_H_
 
 /* ----------------------------------------------------------------
+ * DEFINITIONS
+ * -------------------------------------------------------------- */
+
+// This is the list of 'internet restricted' APNs. Normal internet
+// communication on these APNs is not exercised, like requesting
+// the date/time from a NTP service.
+// TSUDP:- Thingstream MQTT-Anywhere dedicated APN.
+const char *restrictredAPNs[] = {
+    "TSUDP",
+};
+
+/* ----------------------------------------------------------------
  * COMMON TASK FUNCTIONS
  * -------------------------------------------------------------- */
 int32_t initNetworkRegistrationTask(taskConfig_t *config);
+
+// Start the registration process and keep a track on the status
 int32_t startNetworkRegistrationTaskLoop(commandParamsList_t *params);
+
+// Stop the tracking of the registration process and disconnect from
+// the network. Warning - other communications tasks will not be able
+// to send their messages if the registration task is stopped.
 int32_t stopNetworkRegistrationTaskLoop(commandParamsList_t *params);
 
 /* ----------------------------------------------------------------

@@ -59,14 +59,21 @@ bool isMutexLocked(uPortMutexHandle_t mutex)
 }
 
 /// @brief Duplicates a string via malloc - remember to free()!
-/// @param src the source string
-/// @returns either the duplicates string pointer, or NULL
+/// @param src the string source
+/// @returns pointer to the duplicated string, or NULL
 char *uStrDup(const char *src)
 {
-    size_t len = strlen(src) + 1;  // String plus '\0'
-    char *dst = pUPortMalloc(len); // Allocate space
+    return (char *)uMemDup((void *)src, strlen(src)+1);
+}
+
+/// @brief Duplicates a block of data via malloc - remember to free()!
+/// @param src the data source
+/// @returns pointer to the duplicated data, or NULL
+void *uMemDup(const void *src, size_t len)
+{
+    void *dst = pUPortMalloc(len);
     if(dst == NULL) {
-        writeError("No memory for uStrDup()");
+        writeError("No memory for data duplication");
         return NULL;
     }
 
@@ -82,7 +89,12 @@ static commandParamsList_t *createParam(char *param)
         return NULL;
     }
 
-    newParam->parameter = uStrDup(param);
+    newParam->parameter = uMemDup(param, strlen(param)+1);
+    if (newParam->parameter == NULL) {
+        writeError("No memory for createParam()");
+        return NULL;
+    }
+
     newParam->pNext = NULL;
 
     return newParam;

@@ -46,7 +46,15 @@
 /* ----------------------------------------------------------------
  * DEFINITIONS
  * -------------------------------------------------------------- */
-#define APN "TSIOT"
+// THINGSTREAM SIMS:-
+//  -   Use TSUDP for Thingstream MQTT-Anywhere and remember to change the
+//      MQTT credentails config file for MQTT-SN!
+//  -   USE TSIOT for 'normal' internet use.
+// RESTRICTED APNS:-
+//  -   In the tasks/registrationTask.h file there is a list of APNs
+//      which are marked as 'restricted'. This means normal internet
+//      queries are not available, like the NTP service on TSUDP APN.
+#define APN "TSUDP"
 
 // Use the RAT enum from the UBXLIB uCellNetRat_t list.
 #define URAT U_CELL_NET_RAT_CATM1

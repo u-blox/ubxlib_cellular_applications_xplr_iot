@@ -33,7 +33,11 @@
 #define MQTT_QUEUE_PRIORITY 5
 #define MQTT_QUEUE_SIZE 10
 
-#define COPYTO(msg, x) ((msg.x = uStrDup(x))==NULL) ? true : failed
+//#define STRCOPYTO(x, y)         (((x = uStrDup(y))==NULL) ? true : failed)
+//#define MEMCOPYTO(x, y, len)    (((x = uMemDup(y, len))==NULL) ? true : failed)
+
+#define STRCOPYTO(x, y)         (failed ? true : ((x = uStrDup(y))==NULL) ? true : false)
+#define MEMCOPYTO(x, y, len)    (failed ? true : ((x = uMemDup(y, len))==NULL) ? true : false)
 
 #define MAX_TOPIC_SIZE 100
 #define MAX_MESSAGE_SIZE (12 * 1024 + 1)    // set this to 12KB as this
@@ -44,6 +48,8 @@
 #define MAX_TOPIC_CALLBACKS 50
 
 #define TEMP_TOPIC_NAME_SIZE 150
+
+#define MQTT_TYPE_NAME (mqttSN ? "MQTT-SN Gateway" : "MQTT Broker")
 
 /* ----------------------------------------------------------------
  * COMMON TASK VARIABLES
@@ -56,11 +62,18 @@ static taskConfig_t *taskConfig = NULL;
  * -------------------------------------------------------------- */
 typedef struct TOPIC_CALLBACK {
     char *topicName;
+    uMqttSnTopicName_t *snShortName;
     uMqttQos_t qos;
 
     int32_t numCallbacks;
     callbackCommand_t *callbacks;
 } topicCallback_t;
+
+typedef struct MQTTSN_TOPIC_NAME_NODE {
+    char *topicName;
+    uMqttSnTopicName_t *snShortName;
+    struct MQTTSN_TOPIC_NAME_NODE *next;
+} mqttSNTopicNameNode_t;
 
 /* ----------------------------------------------------------------
  * STATIC VARIABLES
@@ -74,40 +87,64 @@ static int32_t topicCallbackCount = 0;
 static topicCallback_t *topicCallbackRegister[MAX_TOPIC_CALLBACKS];
 
 static char tempTopicName[TEMP_TOPIC_NAME_SIZE];
+
+static bool mqttSN = false;
+static mqttSNTopicNameNode_t *mqttSNTopicNameList = NULL;
+
 /* ----------------------------------------------------------------
  * STATIC FUNCTIONS
  * -------------------------------------------------------------- */
+
+static bool isNotExiting(void)
+{
+    return !gExitApp && !exitTask;
+}
 
 /// @brief Send an MQTT Message - remember to FREE the msg memory!!!!
 /// @param msg The message to send.
 static void mqttSendMessage(sendMQTTMsg_t msg)
 {
+    if (!isNotExiting()) return;
+
     int32_t errorCode = 0;
 
     if (pContext != NULL && uMqttClientIsConnected(pContext)) {
         gAppStatus = MQTT_CONNECTED;
-        errorCode = uMqttClientPublish(pContext, msg.pTopicName, msg.pMessage,
+        if (mqttSN) {
+            errorCode = uMqttClientSnPublish(pContext, msg.topic.pShortName, msg.pMessage,
                                                     strlen(msg.pMessage),
                                                     msg.QoS,
                                                     msg.retain);
+        } else {
+            errorCode = uMqttClientPublish(pContext, msg.topic.pTopicName, msg.pMessage,
+                                                    strlen(msg.pMessage),
+                                                    msg.QoS,
+                                                    msg.retain);
+        }
     } else {
         errorCode = U_ERROR_COMMON_NOT_INITIALISED;
-        writeDebug("MQTT Client is not online, not publishing message");
     }
 
-    uPortFree(msg.pTopicName);
     uPortFree(msg.pMessage);
+    if (mqttSN)
+        uPortFree(msg.topic.pShortName);
+    else
+        uPortFree(msg.topic.pTopicName);
 
     if (errorCode == 0)
         writeDebug("Published MQTT message");
     else {
-        if (errorCode != U_ERROR_COMMON_NOT_INITIALISED)
+        if (errorCode == U_ERROR_COMMON_NOT_INITIALISED)
+            writeDebug("MQTT Client is not online, not publishing message");
+        else
             writeWarn("Failed to publish MQTT message: %d", errorCode);
     }
 }
 
 static void queueHandler(void *pParam, size_t paramLengthBytes)
 {
+    if (!isNotExiting()) return;
+
     mqttMsg_t *qMsg = (mqttMsg_t *) pParam;
 
     switch(qMsg->msgType) {
@@ -138,24 +175,21 @@ static void downlinkMessageCallback(int32_t msgCount, void *param)
 static int32_t connectBroker(void)
 {
     gAppStatus = MQTT_CONNECTING;
+    mqttSN = strcmp(getConfig("MQTT-TYPE"), "MQTT-SN") == 0;
 
-    bool mqttSN = strcmp(getConfig("MQTT-TYPE"), "MQTT-SN") == 0;
-    if (mqttSN)
-        writeLog("Connecting to MQTT-SN gateway...");
-    else
-        writeLog("Connecting to MQTT Broker...");
-
+    writeLog("Connecting to %s...", MQTT_TYPE_NAME);
     uMqttClientConnection_t connection = U_MQTT_CLIENT_CONNECTION_DEFAULT;
     connection.pBrokerNameStr = getConfig("MQTT_BROKER_NAME");
     connection.pUserNameStr = getConfig("MQTT_USERNAME");
     connection.pPasswordStr = getConfig("MQTT_PASSWORD");
+    connection.pClientIdStr = getConfig("MQTT-CLIENTID");
     connection.mqttSn = mqttSN;
     connection.inactivityTimeoutSeconds = 0; // zero = no timeout
     connection.keepAlive = false;
 
     int32_t errorCode = uMqttClientConnect(pContext, &connection);
     if (errorCode != 0) {
-        writeError("Failed to connect to the MQTT Broker: %d", errorCode);
+        writeError("Failed to connect to the %s: %d", MQTT_TYPE_NAME, errorCode);
         return errorCode;
     }
 
@@ -172,26 +206,20 @@ static int32_t connectBroker(void)
         return errorCode;
     }
 
-    writeLog("Connected to MQTT Broker");
+    writeLog("Connected to %s", MQTT_TYPE_NAME);
     return 0;
 }
 
 static int32_t disconnectBroker(void)
 {
-    writeLog("Disconnecting from MQTT broker...");
     int32_t errorCode = uMqttClientDisconnect(pContext);
     if (errorCode != 0) {
-        writeError("Failed to disconnect from MQTT Broker: %d", errorCode);
+        writeError("Failed to disconnect from %s: %d", MQTT_TYPE_NAME, errorCode);
     } else {
-        writeLog("Disconnected from MQTT Broker");
+        writeLog("Disconnected from %s", MQTT_TYPE_NAME);
     }
 
     return errorCode;
-}
-
-static bool isNotExiting(void)
-{
-    return !gExitApp && !exitTask;
 }
 
 /// @brief Flag to indicate we can continue to dwell and wait for an event
@@ -219,6 +247,18 @@ static void freeCallbacks(void)
     }
 }
 
+static bool getTopicNameFromSnTopicId(uint16_t id, char *topicName)
+{
+    for(int i=0; i<topicCallbackCount; i++) {
+        if (topicCallbackRegister[i]->snShortName->name.id == id) {
+            memcpy(topicName, topicCallbackRegister[i]->topicName, strlen(topicCallbackRegister[i]->topicName));
+            return true;
+        }
+    }
+
+    return false;
+}
+
 /// @brief Read an MQTT message
 /// @return the size of the message which has been read, or negative on error
 static int32_t readMessage(void)
@@ -232,7 +272,17 @@ static int32_t readMessage(void)
     size_t msgSize = MAX_MESSAGE_SIZE;
     uMqttQos_t QoS;
     printDebug("Reading MQTT Message...");
-    errorCode = uMqttClientMessageRead(pContext, topicString, MAX_TOPIC_SIZE, downlinkMessage, &msgSize, &QoS);
+    if (mqttSN) {
+        uMqttSnTopicName_t snTopicName;
+        errorCode = uMqttClientSnMessageRead(pContext, &snTopicName, downlinkMessage, &msgSize, &QoS);
+        if (!getTopicNameFromSnTopicId(snTopicName.name.id, topicString)) {
+            printWarn("Failed to find MQTT-SN TopicId: %d", snTopicName.name.id);
+            errorCode = U_ERROR_COMMON_NOT_FOUND;
+        }
+    } else {
+        errorCode = uMqttClientMessageRead(pContext, topicString, MAX_TOPIC_SIZE, downlinkMessage, &msgSize, &QoS);
+    }
+
     if (errorCode < 0) {
         writeError("Failed to read the MQTT Message: %d", errorCode);
         return errorCode;
@@ -328,7 +378,7 @@ static void taskLoop(void *pParameters)
                 writeLog("MQTT client disconnected, going to try to connect...");
                 connectBroker();
             } else {
-                writeDebug("Can't connect to MQTT broker, network is still not available...");
+                writeDebug("Can't connect to %s, network is still not available...", MQTT_TYPE_NAME);
                 uPortTaskBlock(2000);
             }
         } else {
@@ -339,7 +389,7 @@ static void taskLoop(void *pParameters)
         }
     }
 
-    // Application exiting, so disconnect from MQTT Broker...
+    // Application exiting, so disconnect from MQTT broker/SN gateway...
     disconnectBroker();
     uMqttClientClose(pContext);
 
@@ -389,7 +439,23 @@ static int32_t registerTopicCallBack(topicCallback_t *topicCallback)
         return U_ERROR_COMMON_NOT_INITIALISED;
     }
 
-    int32_t errorCode = uMqttClientSubscribe(pContext, topicCallback->topicName, topicCallback->qos);
+    int32_t errorCode;
+
+    if (mqttSN) {
+        topicCallback->snShortName = (uMqttSnTopicName_t *)malloc(sizeof(uMqttSnTopicName_t));
+        if (topicCallback->snShortName == NULL) {
+            writeError("Failed to allocate memory for the MQTT-SN short topic name");
+            return U_ERROR_COMMON_NO_MEMORY;
+        }
+
+        errorCode = uMqttClientSnSubscribeNormalTopic(pContext, topicCallback->topicName,
+                                                                topicCallback->qos,
+                                                                topicCallback->snShortName);
+    } else {
+        errorCode = uMqttClientSubscribe(pContext,  topicCallback->topicName,
+                                                    topicCallback->qos);
+    }
+
     if (errorCode < 0) {
         writeError("Failed to subscribe to topic: %s", topicCallback->topicName);
         return errorCode;
@@ -444,6 +510,94 @@ static void subscribeToTopic(void *pParam)
 
 cleanUp:
     uPortTaskDelete(NULL);
+}
+
+static int32_t registerSNShortName(const char *topicName, uMqttSnTopicName_t **snShortName)
+{
+    int32_t errorCode = U_ERROR_COMMON_NO_MEMORY;
+
+    // allocate the memory for the sn Topic Name structure
+    *snShortName = (uMqttSnTopicName_t *)malloc(sizeof(uMqttSnTopicName_t));
+    if (*snShortName == NULL) {
+        writeError("Failed to allocate memory for the MQTT-SN short topic name");
+        goto cleanup;
+    }
+
+    // register the topic name with the MQTT-SN gateway
+    errorCode = uMqttClientSnRegisterNormalTopic(pContext, topicName, *snShortName);
+    if (errorCode != 0) {
+        writeError("Failed to register topic name '%s' on the MQTT-SN gateway: %d", topicName, errorCode);
+        goto cleanup;
+    }
+
+    errorCode = U_ERROR_COMMON_SUCCESS;
+
+cleanup:
+    if (errorCode != 0) {
+        uPortFree(*snShortName);
+    }
+
+    return errorCode;
+}
+
+static void printList()
+{
+    mqttSNTopicNameNode_t *currentNode = mqttSNTopicNameList;
+
+    while (currentNode != NULL) {
+        printInfo("Topic Name: %s, Short Name: %d", currentNode->topicName, currentNode->snShortName->name.id);
+        currentNode = currentNode->next;
+    }
+}
+
+static int32_t getMqttSNTopicName(const char *topicName, uMqttSnTopicName_t **snShortName)
+{
+    mqttSNTopicNameNode_t *currentNode = mqttSNTopicNameList;
+
+    // check if the short name has already been registered?
+    while(currentNode != NULL) {
+        if(strcmp(currentNode->topicName, topicName) == 0) {
+            *snShortName = currentNode->snShortName;
+            return U_ERROR_COMMON_SUCCESS;
+        }
+
+        currentNode = currentNode->next;
+    }
+
+    // Create a new topicName/shortName node and register the topic with the MQTT-SN gateway
+    int32_t errorCode = U_ERROR_COMMON_NO_MEMORY;
+    mqttSNTopicNameNode_t *newNode = (mqttSNTopicNameNode_t *)malloc(sizeof(mqttSNTopicNameNode_t));
+    if (newNode == NULL) {
+        writeError("Failed to allocate memory for new MQTT TopicName/ShortName entry");
+        goto cleanup;
+    }
+
+    newNode->topicName = uStrDup(topicName);
+    if (newNode->topicName == NULL) {
+        writeError("Failed to allocate memory for topic name in the TopicName/ShortName entry");
+        goto cleanup;
+    }
+
+    errorCode = registerSNShortName(topicName, snShortName);
+    if (errorCode < 0)
+        goto cleanup;
+
+    // add it to the linked list
+    newNode->snShortName = *snShortName;
+    newNode->next = mqttSNTopicNameList;
+    mqttSNTopicNameList = newNode;
+
+    printList();
+
+    errorCode = U_ERROR_COMMON_SUCCESS;
+
+cleanup:
+    if (errorCode != 0) {
+        uPortFree(newNode->topicName);
+        uPortFree(newNode);
+    }
+
+    return errorCode;
 }
 
 /* ----------------------------------------------------------------
@@ -518,14 +672,23 @@ int32_t sendMQTTMessage(const char *pTopicName, const char *pMessage, uMqttQos_t
         return U_ERROR_COMMON_TEMPORARY_FAILURE;
     }
 
+    if (!isNotExiting()) return U_ERROR_COMMON_BUSY;
+
     int32_t errorCode = U_ERROR_COMMON_SUCCESS;
 
     mqttMsg_t qMsg;
     qMsg.msgType = SEND_MQTT_MESSAGE;
 
     bool failed = false;
-    failed = COPYTO(qMsg.msg.message, pTopicName);
-    failed = COPYTO(qMsg.msg.message, pMessage);
+    uMqttSnTopicName_t *snShortName;
+
+    failed = STRCOPYTO(qMsg.msg.message.pMessage, pMessage);
+    if (!failed && mqttSN) {
+        failed = getMqttSNTopicName(pTopicName, &snShortName) != 0;
+        failed = MEMCOPYTO(qMsg.msg.message.topic.pShortName, snShortName, sizeof(uMqttSnTopicName_t));
+    } else {
+        failed = STRCOPYTO(qMsg.msg.message.topic.pTopicName, pTopicName);
+    }
 
     if (failed) {
         errorCode = U_ERROR_COMMON_NO_MEMORY;
@@ -544,8 +707,13 @@ int32_t sendMQTTMessage(const char *pTopicName, const char *pMessage, uMqttQos_t
 
 cleanup:
     if (errorCode != 0) {
-        uPortFree(qMsg.msg.message.pTopicName);
-        qMsg.msg.message.pTopicName = NULL;
+        if (mqttSN) {
+            uPortFree(qMsg.msg.message.topic.pShortName);
+            qMsg.msg.message.topic.pShortName = NULL;
+        } else {
+            uPortFree(qMsg.msg.message.topic.pTopicName);
+            qMsg.msg.message.topic.pTopicName = NULL;
+        }
 
         uPortFree(qMsg.msg.message.pMessage);
         qMsg.msg.message.pMessage = NULL;
