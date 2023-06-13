@@ -36,7 +36,7 @@ typedef enum {
  * -------------------------------------------------------------- */
 #define STARTUP_DELAY 250        // 250 * 20ms => 5 seconds
 #define LOG_FILENAME "log.csv"
-#define CONFIG_FILENAME "config.txt"
+#define MQTT_CREDENTIALS_FILENAME "mqttCredentials.txt"
 
 // Dwell time of the main loop activity, pause period until the loop runs again
 #define APP_DWELL_TIME_MS_MINIMUM 5000
@@ -73,6 +73,10 @@ uDeviceHandle_t gDeviceHandle;
 // This flag is set to true when Button #1 is pressed.
 bool gExitApp = false;
 bool gExitFast = false; // don't wait for closing app Tasks, just close the log file and exit.
+
+// reference to our mqtt credentials which are used for the application's publish/subscription
+extern const char *mqttCredentials[];
+extern int32_t mqttCredentialsSize;
 
 /* ----------------------------------------------------------------
  * STATIC FUNCTIONS
@@ -287,15 +291,28 @@ bool initXplrDevice(void)
     // Display the file system free size
     displayFileSpace(LOG_FILENAME);
 
-    // Save the configuration file (if present)
-    int32_t saveResult = saveConfigFile(CONFIG_FILENAME);
-    if (saveResult != 0 && saveResult != U_ERROR_COMMON_NOT_FOUND) {
-        printFatal("Aborting application as configuration file was not written");
-        return false;
+    // Save the mqtt credentials file (if present)
+    if (mqttCredentials != NULL) {
+        int32_t saveResult = saveConfigFile(MQTT_CREDENTIALS_FILENAME,
+                                            mqttCredentials,
+                                            mqttCredentialsSize);
+
+        if (saveResult != 0 && saveResult != U_ERROR_COMMON_NOT_FOUND) {
+            printFatal("Aborting application as configuration file was not written");
+            return false;
+        }
+    } else {
+        printDebug("No mqtt credentials to save to file system");
     }
 
-    // Load the configuration file
-    loadConfigFile(CONFIG_FILENAME);
+    // Load the mqtt credentials config file
+    printInfo("Loading MQTT Credentials...");
+    loadConfigFile(MQTT_CREDENTIALS_FILENAME);
+
+    // Note: Can load other configuration files too. Everything is appended
+    // to the config list array.
+
+    printConfiguration();
 
     // now allow the buttons to run their commands
     buttonCommandEnabled = true;

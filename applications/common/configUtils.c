@@ -16,7 +16,7 @@
 
 /*
  *
- * Utility functions to help load 'config' files in
+ * Utility functions to help load and save 'config' files
  *
  */
 
@@ -44,7 +44,6 @@ typedef struct APP_CONFIG_LIST {
 /* ----------------------------------------------------------------
  * STATIC VARIABLES
  * -------------------------------------------------------------- */
-static char *configText;
 static struct fs_file_t configFile;
 static appConfigList_t *configList;
 
@@ -53,6 +52,11 @@ static appConfigList_t *configList;
  * -------------------------------------------------------------- */
 static appConfigList_t *createConfigKVP(char *key, char *value) {
     appConfigList_t *newKVP = (appConfigList_t *)pUPortMalloc(sizeof(appConfigList_t));
+    if (newKVP == NULL) {
+        writeError("Failed to allocate memory for new KeyValuePair config parameter");
+        return NULL;
+    }
+
     newKVP->key = key;
     newKVP->value = value;
     newKVP->pNext = NULL;
@@ -60,10 +64,10 @@ static appConfigList_t *createConfigKVP(char *key, char *value) {
     return newKVP;
 }
 
-static size_t parseConfiguration(appConfigList_t **head)
+static size_t parseConfiguration(char *configText, appConfigList_t **head)
 {
     size_t count = 0;
-    appConfigList_t *current;
+    appConfigList_t *current, *newNode;
 
     do {
         char *key = strtok_r(configText, CONFIG_DELIMITERS, &configText);
@@ -72,11 +76,15 @@ static size_t parseConfiguration(appConfigList_t **head)
             break;
         }
 
+        newNode = createConfigKVP(key, value);
+        if (newNode == NULL)
+            break;
+
         if(count == 0) {
-            *head = createConfigKVP(key, value);
+            *head = newNode;
             current = *head;
         } else {
-            current->pNext = createConfigKVP(key, value);
+            current->pNext = newNode;
             current = current->pNext;
         }
 
@@ -86,24 +94,35 @@ static size_t parseConfiguration(appConfigList_t **head)
     return count;
 }
 
-static void printConfiguration(void)
+static bool checkWrittenCount(ssize_t writeCount, int32_t paramSize)
 {
-    size_t count=1;
-    printLog("\n--- MQTT Credentials ------------------------------------------");
-    appConfigList_t *kvp = configList;
-    char *value;
+    if (writeCount != paramSize) {
+        if (writeCount < 0)
+            writeError("Failed to write configuration parameter to file. Error: %d", writeCount);
+        else
+            writeError("Failed to write configuration parameter to file. Param size: %d, written size: %d", paramSize, writeCount);
 
-    while(kvp != NULL) {
-        value = getConfig(kvp->key);
-        if (value==NULL) value = "N/A";
-        printLog("   Key #%d: %s = %s",
-                count, kvp->key, value);
-
-        kvp = kvp->pNext;
-        count++;
+        return false;
     }
 
-    printLog("");
+    return true;
+}
+
+static int32_t writeParam(const char *configParams[], int32_t paramIndex)
+{
+    int32_t paramSize = strlen(configParams[paramIndex]);
+
+    // write the parameter
+    ssize_t count = fs_write(&configFile, configParams[paramIndex], paramSize);
+    if (!checkWrittenCount(count, paramSize))
+        return U_ERROR_COMMON_DEVICE_ERROR;
+
+    // write the new line so that we can parse it later
+    count = fs_write(&configFile, "\n", 1);
+    if (!checkWrittenCount(count, 1))
+        return U_ERROR_COMMON_DEVICE_ERROR;
+
+    return U_ERROR_COMMON_SUCCESS;
 }
 
 /* ----------------------------------------------------------------
@@ -112,14 +131,16 @@ static void printConfiguration(void)
 
 /// @brief Saves the configuration file defined in the header file
 /// @param filename The filename of the configuration file
+/// @param configParams The char array of the parameters (key value pair)
+/// @param configParamsSize The number of parameters in the char array
 /// @return 0 on success, negative on failure
-int32_t saveConfigFile(const char *filename)
+int32_t saveConfigFile(const char *filename, const char *configParams[], int32_t configParamsSize)
 {
     int32_t success;
     int32_t errorCode = U_ERROR_COMMON_SUCCESS;
 
-    if (MQTT_CREDENTIALS == NULL) {
-        writeDebug("No configuration file to save to file system");
+    if (configParams == NULL) {
+        printDebug("No configuration file to save to file system");
         return U_ERROR_COMMON_NOT_FOUND;
     }
 
@@ -140,29 +161,23 @@ int32_t saveConfigFile(const char *filename)
         return U_ERROR_COMMON_DEVICE_ERROR;
     }
 
-    size_t configFileSize = sizeof(MQTT_CREDENTIALS);
-    int32_t count = fs_write(&configFile, MQTT_CREDENTIALS, configFileSize);
-    if (count != configFileSize) {
-        if (count < 0)
-            writeError("Failed to write configuration file. Error: %d", count);
-        else
-            writeError("Failed to write configuration file. Config size: %d, written size: %d", configFileSize, count);
-
-        errorCode = U_ERROR_COMMON_DEVICE_ERROR;
-    }
+    for(int i=0; i<configParamsSize && errorCode == U_ERROR_COMMON_SUCCESS;  i++)
+        errorCode = writeParam(configParams, i);
 
     fs_close(&configFile);
 
     return errorCode;
 }
 
-/// @brief Loads a configuration file ready for indexing
+/// @brief Loads a configuration file ready for indexing. Can load multiple config files
 /// @param filename The filename of the configuration file
 /// @return 0 on success, negative on failure
 int32_t loadConfigFile(const char *filename)
 {
     int32_t success;
     int32_t errorCode = U_ERROR_COMMON_SUCCESS;
+
+    char *configText = NULL;
 
     const char *path = extFsPath(filename);
     if (!extFsFileExists(path)) {
@@ -200,8 +215,7 @@ int32_t loadConfigFile(const char *filename)
         buffer = buffer + count;
     }
 
-    parseConfiguration(&configList);
-    printConfiguration();
+    parseConfiguration(configText, &configList);
 
 cleanUp:
     if (errorCode != 0) {
@@ -211,6 +225,24 @@ cleanUp:
     fs_close(&configFile);
 
     return errorCode;
+}
+
+void printConfiguration(void)
+{
+    size_t count=1;
+    appConfigList_t *kvp = configList;
+    char *value;
+
+    while(kvp != NULL) {
+        value = getConfig(kvp->key);
+        if (value==NULL) value = "N/A";
+        printDebug("   Key #%d: %s = %s", count, kvp->key, value);
+
+        kvp = kvp->pNext;
+        count++;
+    }
+
+    printLog("");
 }
 
 /// @brief Returns the specified configuration value

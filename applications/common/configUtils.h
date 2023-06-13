@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef _CONFIG_H_
-#define _CONFIG_H_
+#ifndef _CONFIG_UTILS_H_
+#define _CONFIG_UTILS_H_
 
 /* ----------------------------------------------------------------
  * PUBLIC FUNCTIONS
@@ -34,8 +34,13 @@ int32_t loadConfigFile(const char *filename);
 
 /// @brief Saves the CONFIG_FILE_CONTENTS defined above
 /// @param filename The filename of the configuration file
+/// @param configParams The char array of the parameters (key value pair)
+/// @param configParamsSize The number of parameters in the char array
 /// @return 0 on success, negative on failure
-int32_t saveConfigFile(const char *filename);
+int32_t saveConfigFile(const char *filename, const char *configParams[], int32_t configParamsSize);
+
+/// @brief Prints the configuration list
+void printConfiguration(void);
 
 /// @brief returns the specified configuration value
 /// @param key The configuration name to return the value of

@@ -79,6 +79,14 @@ static const uNetworkType_t gNetworkType = U_NETWORK_TYPE_CELL;
 // the UBXLIB uNetworkInterfaceUp() function
 static volatile int32_t networkUpCounter = 0;
 
+// This is the list of 'internet restricted' APNs. Normal internet
+// communication on these APNs is not exercised, like requesting
+// the date/time from a NTP service.
+// TSUDP:- Thingstream MQTT-Anywhere dedicated APN.
+static const char *restrictredAPNs[] = {
+    "TSUDP",
+};
+
 /* ----------------------------------------------------------------
  * PUBLIC VARIABLES
  * -------------------------------------------------------------- */
@@ -88,6 +96,8 @@ bool gIsNetworkUp = false;
 
 /// The unix network time, which is retrieved after first registration
 extern int64_t unixNetworkTime;
+
+//ssextern const char *restrictredAPNs[];
 
 /* ----------------------------------------------------------------
  * STATIC FUNCTIONS
@@ -112,8 +122,8 @@ static void networkStatusCallback(uDeviceHandle_t devHandle,
 
 static bool usingRestrictedAPN(void)
 {
-    for(int i=0; i<NUM_ELEMENTS(restrictedAPNList); i++) {
-        if (strcmp(restrictedAPNList[i], APN) == 0)
+    for(int i=0; i<NUM_ELEMENTS(restrictredAPNs); i++) {
+        if (strcmp(restrictredAPNs[i], APN) == 0)
             return true;
     }
 

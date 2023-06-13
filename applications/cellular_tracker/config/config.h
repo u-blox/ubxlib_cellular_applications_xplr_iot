@@ -35,34 +35,59 @@
  that it is not saved to the repository :)
  */
 
-#include "mqtt_credentials.h"
+#ifndef _CONFIG_H_
+#define _CONFIG_H_
 
 /* ----------------------------------------------------------------
  * DEBUG LEVEL SETTING - This can be changed remotely using
- *                       "SET_LOG_LEVEL" command via the MQTT topic
+ *                       "SET_LOG_LEVEL" command via the
+ *                        APP_CONTROL MQTT topic
  * -------------------------------------------------------------- */
-#define LOGGING_LEVEL eINFO            // logLevels_t
+#define LOGGING_LEVEL eINFO            // taken from logLevels_t
 
 /* ----------------------------------------------------------------
- * DEFINITIONS
+ * APN SELECTION
+ *
+ * THINGSTREAM SIMS:-
+ *  -   Must use 'TSUDP' for Thingstream MQTT-Anywhere.
+ *  -   USE 'TSIOT' for 'normal' internet use.
+ *
+ * RESTRICTED APNS:-
+ *  -   In the tasks/registrationTask.c file there is a list of APNs
+ *      which are marked as 'restricted'. This means normal internet
+ *      queries are not available, like the NTP service on TSUDP APN.
+ *      Edit this list for other APNs which are restricted/limited.
  * -------------------------------------------------------------- */
-// THINGSTREAM SIMS:-
-//  -   Use TSUDP for Thingstream MQTT-Anywhere and remember to change the
-//      MQTT credentails config file for MQTT-SN!
-//  -   USE TSIOT for 'normal' internet use.
-// RESTRICTED APNS:-
-//  -   In the tasks/registrationTask.h file there is a list of APNs
-//      which are marked as 'restricted'. This means normal internet
-//      queries are not available, like the NTP service on TSUDP APN.
 #define APN "TSUDP"
 
-// Use the RAT enum from the UBXLIB uCellNetRat_t list.
+/* ----------------------------------------------------------------
+ * MQTT CREDENTIALS SELECTION
+ *
+ * Please select, using one #define below, which mqtt configuration
+ * to use for this application.
+ * Each are described in the mqtt_credentials.h file
+ * ----------------------------------------------------------------*/
+#define MQTT_THINGSTREAM_ANYWHERE
+//#define MQTT_MOSQUITTO
+//#define MQTT_THINGSTREAM_NOW
+
+/*  ----------------------------------------------------------------
+ * RADIO ACCESS TECHNOLOGY SELECTION
+ *
+ * Please use the same RAT enum from the UBXLIB uCellNetRat_t list.
+ *  ----------------------------------------------------------------*/
 #define URAT U_CELL_NET_RAT_CATM1
 
-// Standard Europe MNO profile
+/* ----------------------------------------------------------------
+ * MNO PROFILE SELECTION
+ *
+ * Please use the MNO Profile number for the cellular module being
+ * used. See the AT command manual appendix for list
+ *
+ * Standard Profiles:
+ *    100 = European
+ *    90  = Global
+ * ----------------------------------------------------------------*/
 #define MNO_PROFILE 100
 
-// This is set to NULL if the mqtt_credentials.h is not #included above
-#ifndef _MQTT_CREDENTIALS_H_
-#define MQTT_CREDENTIALS NULL
 #endif

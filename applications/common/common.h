@@ -44,7 +44,7 @@
 
 #define IS_NETWORK_AVAILABLE    (gIsNetworkSignalValid && gIsNetworkUp)
 
-#define NUM_ELEMENTS(x) (sizeof(x) / sizeof((x)[0]))
+#define NUM_ELEMENTS(x) (sizeof(x) / sizeof(x[0]))
 
 #define MAX_NUMBER_COMMAND_PARAMS 5
 
