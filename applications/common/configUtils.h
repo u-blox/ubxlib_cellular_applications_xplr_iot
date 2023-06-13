@@ -45,6 +45,18 @@ void printConfiguration(void);
 /// @brief returns the specified configuration value
 /// @param key The configuration name to return the value of
 /// @return The configuration value on succes, NULL on failure
-char *getConfig(const char *key);
+const char *getConfig(const char *key);
+
+/// @brief Sets a int value from a configuration key, if present
+/// @param key The configuration name to return the value of
+/// @param param A pointer to the int value to set
+/// @return True if the int value was set, False otherwise
+bool setIntParamFromConfig(const char *key, int32_t *param);
+
+/// @brief Sets a bool value from a configuration key, if present
+/// @param key The configuration name to return the value of
+/// @param param A pointer to the bool value to set
+/// @return True if the bool value was set, False otherwise
+bool setBoolParamFromConfig(const char *key, const char *value, bool *param);
 
 #endif

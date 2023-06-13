@@ -309,9 +309,10 @@ bool initXplrDevice(void)
     printInfo("Loading MQTT Credentials...");
     loadConfigFile(MQTT_CREDENTIALS_FILENAME);
 
-    // Note: Can load other configuration files too. Everything is appended
-    // to the config list array.
+    // Note: More configuration files can be loaded.
+    // Everything is appended to the config list array.
 
+    // this will only print if logging is set to DEBUG or higher - security!
     printConfiguration();
 
     // now allow the buttons to run their commands

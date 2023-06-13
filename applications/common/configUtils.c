@@ -231,24 +231,24 @@ void printConfiguration(void)
 {
     size_t count=1;
     appConfigList_t *kvp = configList;
-    char *value;
+    const char *value;
 
     while(kvp != NULL) {
         value = getConfig(kvp->key);
-        if (value==NULL) value = "N/A";
+        if (value == NULL) value = "N/A";
         printDebug("   Key #%d: %s = %s", count, kvp->key, value);
 
         kvp = kvp->pNext;
         count++;
     }
 
-    printLog("");
+    printDebug("");
 }
 
 /// @brief Returns the specified configuration value
 /// @param key The configuration name to return the value of
 /// @return The configuration value on succes, NULL on failure
-char *getConfig(const char *key)
+const char *getConfig(const char *key)
 {
     for(appConfigList_t *kvp = configList; kvp != NULL; kvp=kvp->pNext) {
         if (strcmp(kvp->key, key) == 0) {
@@ -261,4 +261,32 @@ char *getConfig(const char *key)
 
     printWarn("Failed to find '%s' key", key);
     return NULL;
+}
+
+/// @brief Sets an int value from a configuration key, if present
+/// @param key The configuration name to return the value of
+/// @param param A pointer to the int value to set
+/// @return True if the int value was set, False otherwise
+bool setIntParamFromConfig(const char *key, int32_t *param)
+{
+    const char *value = getConfig(key);
+    if (value == NULL) return false;
+
+    *param = atoi(value);
+
+    return true;
+}
+
+/// @brief Sets a bool value from a configuration key, if present
+/// @param key The configuration name to return the value of
+/// @param compare The string to compare the config value to
+/// @param param A pointer to the bool value to set
+/// @return True if the bool value was set, False otherwise
+bool setBoolParamFromConfig(const char *key, const char *compare, bool *param)
+{
+    const char *value = getConfig(key);
+    if (value == NULL) return false;
+
+    *param = strcmp(value, compare) == 0;
+    return true;
 }

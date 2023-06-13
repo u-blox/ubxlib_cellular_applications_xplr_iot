@@ -175,25 +175,51 @@ static void downlinkMessageCallback(int32_t msgCount, void *param)
 static int32_t connectBroker(void)
 {
     gAppStatus = MQTT_CONNECTING;
-    mqttSN = strcmp(getConfig("MQTT-TYPE"), "MQTT-SN") == 0;
 
-    writeLog("Connecting to %s...", MQTT_TYPE_NAME);
     uMqttClientConnection_t connection = U_MQTT_CLIENT_CONNECTION_DEFAULT;
     connection.pBrokerNameStr = getConfig("MQTT_BROKER_NAME");
     connection.pUserNameStr = getConfig("MQTT_USERNAME");
     connection.pPasswordStr = getConfig("MQTT_PASSWORD");
-    connection.pClientIdStr = getConfig("MQTT-CLIENTID");
+    connection.pClientIdStr = getConfig("MQTT_CLIENTID");
+
+    setBoolParamFromConfig("MQTT_TYPE", "MQTT-SN", &mqttSN);
     connection.mqttSn = mqttSN;
-    connection.inactivityTimeoutSeconds = 0; // zero = no timeout
-    connection.keepAlive = false;
+
+    setIntParamFromConfig("MQTT_TIMEOUT", &(connection.inactivityTimeoutSeconds));
+    setBoolParamFromConfig("MQTT_KEEPALIVE", "TRUE", &(connection.keepAlive));
+
+    const char *securityProfile = getConfig("MQTT_SECURITY_PROFILE");
+    if (securityProfile != NULL) {
+        int32_t profileId = atoi(securityProfile);
+
+        // HACK: Here we hack in the security profile ID into ubxlib
+        // ubxlib does not [yet] support just using a security profile id
+        uCellSecTlsContext_t cellSecContext;
+        cellSecContext.profileId = profileId;
+
+        uSecurityTlsContext_t secContext;
+        secContext.pNetworkSpecific = &cellSecContext;
+
+        // temporarily set the security context to allow the uMqttClientConnect to see the profile ID!
+        pContext->pSecurityContext = &secContext;
+    }
+
+    writeLog("Connecting to %s on %s...", MQTT_TYPE_NAME, connection.pBrokerNameStr);
 
     int32_t errorCode = uMqttClientConnect(pContext, &connection);
     if (errorCode != 0) {
         writeError("Failed to connect to the %s: %d", MQTT_TYPE_NAME, errorCode);
-        return errorCode;
     }
 
-    gAppStatus = MQTT_CONNECTED;
+    // reverting the security profile Id HACK above
+    if (securityProfile != NULL)
+        pContext->pSecurityContext = NULL;
+
+    if (errorCode != 0)
+        return errorCode;
+
+    writeLog("Connected to %s", MQTT_TYPE_NAME);
+
     errorCode = uMqttClientSetDisconnectCallback(pContext, disconnectCallback, NULL);
     if (errorCode != 0) {
         writeError("Failed to set MQTT Disconnect callback: %d", errorCode);
@@ -206,7 +232,8 @@ static int32_t connectBroker(void)
         return errorCode;
     }
 
-    writeLog("Connected to %s", MQTT_TYPE_NAME);
+    gAppStatus = MQTT_CONNECTED;
+
     return 0;
 }
 
@@ -504,9 +531,14 @@ static void subscribeToTopic(void *pParam)
     }
 
     writeLog("Subscribed to callback topic: %s", topicCallback->topicName);
-    printLog("With these commands:");
-    for(int i=0; i<topicCallback->numCallbacks; i++)
-        printLog("%s", topicCallback->callbacks[i].command);
+    if (topicCallback->numCallbacks > 0) {
+        printLog("With these commands:");
+        for(int i=0; i<topicCallback->numCallbacks; i++)
+            printLog("    %d: %s", i, topicCallback->callbacks[i].command);
+        printLog("");
+    } else {
+        printWarn("Warning - there are no commands to listen to on this subscription!");
+    }
 
 cleanUp:
     uPortTaskDelete(NULL);
@@ -538,16 +570,6 @@ cleanup:
     }
 
     return errorCode;
-}
-
-static void printList()
-{
-    mqttSNTopicNameNode_t *currentNode = mqttSNTopicNameList;
-
-    while (currentNode != NULL) {
-        printInfo("Topic Name: %s, Short Name: %d", currentNode->topicName, currentNode->snShortName->name.id);
-        currentNode = currentNode->next;
-    }
 }
 
 static int32_t getMqttSNTopicName(const char *topicName, uMqttSnTopicName_t **snShortName)
@@ -586,8 +608,6 @@ static int32_t getMqttSNTopicName(const char *topicName, uMqttSnTopicName_t **sn
     newNode->snShortName = *snShortName;
     newNode->next = mqttSNTopicNameList;
     mqttSNTopicNameList = newNode;
-
-    printList();
 
     errorCode = U_ERROR_COMMON_SUCCESS;
 
@@ -775,6 +795,7 @@ int32_t startMQTTTaskLoop(commandParamsList_t *params)
 
 cleanUp:
     if (errorCode != 0) {
+        uPortTaskDelete(TASK_HANDLE);
         uPortFree(downlinkMessage);
         downlinkMessage = NULL;
     }

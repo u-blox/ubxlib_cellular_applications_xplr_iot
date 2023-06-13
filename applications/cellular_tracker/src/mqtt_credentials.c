@@ -23,7 +23,7 @@
  * MQTT-TYPE is either "MQTT" or "MQTT-SN"
  * You can use NULL for unused parameters, like no username or password
  *
- * If you set MQTT-CLIENTID to NULL in this configuration UBXLIB will automatically set
+ * If you set MQTT_CLIENTID to NULL in this configuration UBXLIB will automatically set
  * the IMEI of the cellular device being used. So unless you MUST set the clientID for
  * your own MQTT broker, you can leave this parameter NULL.
  *
@@ -45,36 +45,42 @@ const char *mqtt_credentials[] = NULL       // NULL will cause the application t
 // Thingstream MQTT-Anywhere uses the SIM security from the network operator
 #ifdef MQTT_THINGSTREAM_ANYWHERE
 const char *mqttCredentials[] = {
-    "MQTT-TYPE MQTT-SN",
+    "MQTT_TYPE MQTT-SN",
     "MQTT_BROKER_NAME 10.7.0.55:2442",
     "MQTT_USERNAME NULL",
     "MQTT_PASSWORD NULL",
-    "MQTT-CLIENTID NULL",
-    "MQTT-SECURITY NULL",
+    "MQTT_CLIENTID NULL",
+    "MQTT_SECURITY_PROFILE NULL",
+    "MQTT_KEEPALIVE NULL",
+    "MQTT_TIMEOUT NULL",
 };
 #endif
 
 // This is the mosquitto test server configuration. Port 1883 has no security.
 #ifdef MQTT_MOSQUITTO
 const char *mqttCredentials[] = {
-    "MQTT-TYPE MQTT",
+    "MQTT_TYPE MQTT",
     "MQTT_BROKER_NAME test.mosquitto.org:1883",
     "MQTT_USERNAME NULL",
     "MQTT_PASSWORD NULL",
-    "MQTT-CLIENTID NULL",
-    "MQTT-SECURITY NULL",
+    "MQTT_CLIENTID NULL",
+    "MQTT_SECURITY_PROFILE NULL",
+    "MQTT_KEEPALIVE NULL",
+    "MQTT_TIMEOUT NULL",
 };
 #endif
 
 // This is the MQTT-NOW service configuration.
 #ifdef MQTT_THINGSTREAM_NOW
 const char *mqttCredentials[] = {
-    "MQTT-TYPE MQTT",
+    "MQTT_TYPE MQTT",
     "MQTT_BROKER_NAME NULL",
     "MQTT_USERNAME NULL",
     "MQTT_PASSWORD NULL",
-    "MQTT-CLIENTID NULL",
-    "MQTT-SECURITY NULL",
+    "MQTT_CLIENTID NULL",
+    "MQTT_SECURITY_PROFILE NULL",
+    "MQTT_KEEPALIVE NULL",
+    "MQTT_TIMEOUT NULL",
 };
 #endif
 
