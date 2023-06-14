@@ -531,7 +531,7 @@ static void subscribeToTopic(void *pParam)
     if (topicCallback->numCallbacks > 0) {
         printLog("With these commands:");
         for(int i=0; i<topicCallback->numCallbacks; i++)
-            printLog("    %d: %s", i, topicCallback->callbacks[i].command);
+            printLog("    %d: %s", i+1, topicCallback->callbacks[i].command);
         printLog("");
     } else {
         printWarn("Warning - there are no commands to listen to on this subscription!");

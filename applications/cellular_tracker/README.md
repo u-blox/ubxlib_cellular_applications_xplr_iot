@@ -11,7 +11,35 @@ If the `Button #1` is pressed the application shuts down and the log file is sav
 Use the do build script with the -e argument: `do -e cellular_tracker build`
 
 ## Configuring the application
-Using the [config.h](config/config.h) file in the [config](config/) folder you will find the cellular URAT and APN settings, plus the MQTT credentials which are not checked into this repository. There is an [mqtt_credentials.h](config/mqtt_credentials.h) for you to edit and #include in the config.h file for providing the MQTT settings/credentials.
+Using the [config.h](config/config.h) file in the [config](config/) folder you will find the cellular URAT and APN settings. 
+
+For the MQTT connection, there is a #define of the MQTT credentials which to use for this application. Please see the [mqttCredentials.c](src/mqtt_credentials.c) file for examples of MQTT broker settings.
+
+# Application remote commands
+
+The application can be remotely controlled through various topics which are subscribed to by the application tasks. The listed topics and their commands are here:
+
+## <IMEI\>AppControl
+
+### SET_DWELL_TIME <milliseconds\>
+Sets the period between the main loop performing the location and signal quality measurements. Default is 5 seconds.
+
+### SET_LOG_LEVEL <log level\>
+Sets the logging level of the application. Default is '2' for INFO log level.
+
+    0: TRACE
+    1: DEBUG
+    2: INFO
+    3: WARN
+    4: ERROR
+    5: FATAL
+
+It could be possible to increase the logging of an application remotely by changing the logging value from '2' to '1'.
+
+## <IMEI\>CellScanControl
+
+### START_CELL_SCAN
+Starts a cell scan process, just as if you had pressed Button #2
 
 # NOTES
 ## Thingstream SIMS
