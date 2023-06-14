@@ -28,7 +28,7 @@
 /* ----------------------------------------------------------------
  * DEFINES
  * -------------------------------------------------------------- */
-#define LED_TASK_STACK_SIZE 1024
+#define LED_TASK_STACK_SIZE QUEUE_STACK_SIZE_DEFAULT
 #define LED_TASK_PRIORITY 5
 
 /* ----------------------------------------------------------------
@@ -132,7 +132,7 @@ static int32_t initQueue()
     int32_t eventQueueHandle = uPortEventQueueOpen(&queueHandler,
                     TASK_NAME,
                     sizeof(LEDConfigMsg_t),
-                    1024,
+                    LED_TASK_STACK_SIZE,
                     1,
                     1);
 

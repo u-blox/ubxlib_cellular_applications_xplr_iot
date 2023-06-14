@@ -43,7 +43,7 @@
  *                       "SET_LOG_LEVEL" command via the
  *                        APP_CONTROL MQTT topic
  * -------------------------------------------------------------- */
-#define LOGGING_LEVEL eINFO            // taken from logLevels_t
+#define LOGGING_LEVEL eDEBUG            // taken from logLevels_t
 
 /* ----------------------------------------------------------------
  * APN SELECTION
@@ -58,18 +58,26 @@
  *      queries are not available, like the NTP service on TSUDP APN.
  *      Edit this list for other APNs which are restricted/limited.
  * -------------------------------------------------------------- */
-#define APN "TSUDP"
+#define APN "TSIOT"
 
 /* ----------------------------------------------------------------
  * MQTT CREDENTIALS SELECTION
  *
- * Please select, using one #define below, which mqtt configuration
+ * Please select, using ONE #define below, which mqtt configuration
  * to use for this application.
- * Each are described in the mqtt_credentials.h file
+ *
+ * Each are described in the src/mqtt_credentials.c file
  * ----------------------------------------------------------------*/
-#define MQTT_THINGSTREAM_ANYWHERE
-//#define MQTT_MOSQUITTO
-//#define MQTT_THINGSTREAM_NOW
+// *** Thingstream MQTT Services
+//#define MQTT_THINGSTREAM_ANYWHERE
+//#define MQTT_THINGSTREAM_FLEX
+//#define MQTT_THINGSTREAM_NOW_NoTLS_AUTH
+//#define MQTT_THINGSTREAM_NOW_TLS_AUTH
+
+// *** Mosquitto MQTT Test Service
+#define MQTT_MOSQUITTO_NoTLS_NoAuth
+//#define MQTT_MOSQUITTO_NoTLS_Auth
+//#define MQTT_MOSQUITTO_TLS_Auth
 
 /*  ----------------------------------------------------------------
  * RADIO ACCESS TECHNOLOGY SELECTION

@@ -29,12 +29,9 @@
  * -------------------------------------------------------------- */
 #define MQTT_TASK_STACK_SIZE 1024
 #define MQTT_TASK_PRIORITY 5
-#define MQTT_QUEUE_STACK_SIZE 1024
+#define MQTT_QUEUE_STACK_SIZE QUEUE_STACK_SIZE_DEFAULT
 #define MQTT_QUEUE_PRIORITY 5
 #define MQTT_QUEUE_SIZE 10
-
-//#define STRCOPYTO(x, y)         (((x = uStrDup(y))==NULL) ? true : failed)
-//#define MEMCOPYTO(x, y, len)    (((x = uMemDup(y, len))==NULL) ? true : failed)
 
 #define STRCOPYTO(x, y)         (failed ? true : ((x = uStrDup(y))==NULL) ? true : false)
 #define MEMCOPYTO(x, y, len)    (failed ? true : ((x = uMemDup(y, len))==NULL) ? true : false)

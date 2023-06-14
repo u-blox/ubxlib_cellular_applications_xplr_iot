@@ -32,7 +32,7 @@
  * -------------------------------------------------------------- */
 #define LOCATION_TASK_STACK_SIZE (3 * 1024)
 #define LOCATION_TASK_PRIORITY 5
-#define LOCATION_QUEUE_STACK_SIZE (3 * 1024)
+#define LOCATION_QUEUE_STACK_SIZE QUEUE_STACK_SIZE_DEFAULT
 #define LOCATION_QUEUE_PRIORITY 5
 #define LOCATION_QUEUE_SIZE 5
 

@@ -33,7 +33,7 @@
 
 #define REG_TASK_STACK_SIZE 1024
 #define REG_TASK_PRIORITY 5
-#define REG_QUEUE_STACK_SIZE 1024
+#define REG_QUEUE_STACK_SIZE QUEUE_STACK_SIZE_DEFAULT
 #define REG_QUEUE_PRIORITY 5
 #define REG_QUEUE_SIZE 5
 
@@ -146,7 +146,7 @@ static void getNetworkOrNTPTime(void)
         }
     }
 
-    // if time is positive, it should be now a valid time
+    // if time is positive, it should now be a valid time
     if (time > 0) {
         // remove the current local tick time from this
         // to obtain a rough "boot" time value.
@@ -230,7 +230,7 @@ static void taskLoop(void *pParameters)
 
         // Just spin the task blocking here.
         // No need to use the dwellTask()
-        uPortTaskBlock(5);
+        uPortTaskBlock(50);
     }
 
     // we've been asked to exit the Network Manager, so go through

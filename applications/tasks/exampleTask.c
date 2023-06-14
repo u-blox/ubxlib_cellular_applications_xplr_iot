@@ -30,7 +30,7 @@
 /* ----------------------------------------------------------------
  * DEFINES
  * -------------------------------------------------------------- */
-#define EXAMPLE_QUEUE_STACK_SIZE (U_PORT_EVENT_QUEUE_MIN_TASK_STACK_SIZE_BYTES)
+#define EXAMPLE_QUEUE_STACK_SIZE QUEUE_STACK_SIZE_DEFAULT
 #define EXAMPLE_QUEUE_PRIORITY 5
 #define EXAMPLE_QUEUE_SIZE 1
 

@@ -104,7 +104,7 @@ void waitForAllTasksToStop()
         for(int i=0; i<NUM_ELEMENTS(taskRunners); i++) {
             taskRunner_t *taskRunner = &taskRunners[i];
             if (!taskRunner->explicit_stop && isMutexLocked(taskRunner->config.handles.mutexHandle)) {
-                printLog("...still waiting for %s task to finish", taskRunner->config.name);
+                printDebug("...still waiting for %s task to finish", taskRunner->config.name);
                 stillWaiting = true;
             }
         }

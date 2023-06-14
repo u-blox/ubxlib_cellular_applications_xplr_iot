@@ -39,21 +39,24 @@
 /* ----------------------------------------------------------------
  * MACORS for common task usage/access
  * -------------------------------------------------------------- */
-#define SET_APP_STATUS(x) tempAppStatus = gAppStatus; gAppStatus = x
-#define REVERT_APP_STATUS(x) gAppStatus = tempAppStatus
+#define SET_APP_STATUS(x)           tempAppStatus = gAppStatus; gAppStatus = x
+#define REVERT_APP_STATUS(x)        gAppStatus = tempAppStatus
 
-#define IS_NETWORK_AVAILABLE    (gIsNetworkSignalValid && gIsNetworkUp)
+#define IS_NETWORK_AVAILABLE        (gIsNetworkSignalValid && gIsNetworkUp)
 
-#define NUM_ELEMENTS(x) (sizeof(x) / sizeof(x[0]))
+#define NUM_ELEMENTS(x)             (sizeof(x) / sizeof(x[0]))
 
-#define MAX_NUMBER_COMMAND_PARAMS 5
+#define MAX_NUMBER_COMMAND_PARAMS   5
 
-#define MAX_TOPIC_NAME_SIZE 50
+#define MAX_TOPIC_NAME_SIZE         50
+
+#define QUEUE_STACK_SIZE(x)         MIN(U_PORT_EVENT_QUEUE_MIN_TASK_STACK_SIZE_BYTES, x)
+#define QUEUE_STACK_SIZE_DEFAULT    U_PORT_EVENT_QUEUE_MIN_TASK_STACK_SIZE_BYTES
 
 /** The maximum length of the Time Stamp string.
  * hh:mm:ss.mmm
  */
-#define TIMESTAMP_MAX_LENTH_BYTES 13
+#define TIMESTAMP_MAX_LENTH_BYTES   13
 
 /* ----------------------------------------------------------------
  * PUBLIC TYPE DEFINITIONS
