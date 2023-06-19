@@ -1,6 +1,6 @@
 # Installation
 
-This directory contains the operating system specific installation scripts for the development tools required to build the XPLR-IOT-1 examples.
+This directory contains the operating system specific installation scripts for the development tools required to build the cellular applications for the XPLR-IoT-1 development kit. This is much the same as the ubxlib_examples_xplr-iot-1 installer, but downloads the cellular applications repository.
 
 These scripts installs all the necessary packages, tools and drivers from scratch. They can typically be used on a PC that has not been used for software development before or one with missing components.
 
@@ -8,7 +8,7 @@ The scripts will also install git and clone the actual repository.
 
 ## Windows
 
-[Click this link](https://github.com/u-blox/ubxlib_examples_xplr_iot/raw/master/install/install_windows.bat) and then chose "Save as" in the browser to download the installation script for Windows. Then right click on the downloaded file and select "Run as administrator". The installation will then start and it is quite a lengthy process, typically ~10 min. **Please avoid** clicking in the window of this operation if you have "Quick Edit" for command windows enabled. Doing so may halt the downloading process which in turn can lead to timeouts and later problems for the installation.
+[Right click this link](https://github.com/u-blox/ubxlib_cellular_applications_xplr_iot/raw/master/install/install_windows.bat) and then chose "Save as" in the browser to download the installation script for Windows. Then right click on the downloaded file and select "Run as administrator". The installation will then start and it is quite a lengthy process, typically ~10 min. **Please avoid** clicking in the window of this operation if you have "Quick Edit" for command windows enabled. Doing so may halt the downloading process which in turn can lead to timeouts and later problems for the installation.
 
 The [chocolatey](https://chocolatey.org/) package manager is used for installing the required tools. The required drivers for the XPLR-IOT-1 serial ports will also be installed.
 
