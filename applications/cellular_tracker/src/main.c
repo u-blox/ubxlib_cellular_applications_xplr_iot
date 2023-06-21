@@ -32,9 +32,11 @@
 #include "mqttTask.h"
 #include "signalQualityTask.h"
 #include "locationTask.h"
+#include "cellScanTask.h"
 
 /* ----------------------------------------------------------------
  * Remote control callbacks for the main application
+ * Add your application topic message callbacks here
  * -------------------------------------------------------------- */
 #define APP_CONTROL_TOPIC "AppControl"
 static callbackCommand_t callbacks[] = {
@@ -42,31 +44,47 @@ static callbackCommand_t callbacks[] = {
     {"SET_LOG_LEVEL", setAppLogLevel}
 };
 
-/// @brief Main entry to the application.
-/// If Button 1 is held, the log file is displayed.
-/// If Button 2 is held, the log file is deleted.
+/// @brief The application function(s) which are run every appDwellTime
+/// @return A flag to indicate the application should continue
+bool appFunction(void)
+{
+    queueMeasureNow(NULL);
+    queueLocationNow(NULL); 
+
+    return true;
+}
+
+void buttonTwo(void)
+{
+    queueNetworkScan(NULL);
+}
+
+/* ----------------------------------------------------------------
+ * Main startup function for the framework
+ * -------------------------------------------------------------- */
 void main(void)
 {
     if (!startupFramework())
         return;
 
-    // Run the two main tasks for this application, Network and MQTT tasks.
+    // The Network registration task is used to connect to the cellular network
+    // This will monitor the +CxREG URCs
     runTask(NETWORK_REG_TASK);
+
+    // The MQTT task connects and reconnects to the MQTT broker selected in the 
+    // config.h file. This needs to run for MQTT messages to be published and
+    // for remote control messages to be handled
     runTask(MQTT_TASK);
 
+    // Set button two to point to the queueCellScan function
+    setButtonTwoFunction(buttonTwo);
+
+    // Subscribe to the main AppControl topic for remote control the main application (this)
     subscribeToTopicAsync(APP_CONTROL_TOPIC, U_MQTT_QOS_AT_MOST_ONCE, callbacks, NUM_ELEMENTS(callbacks));
 
-    // Main application loop
-    while(!gExitApp) {
-        dwellAppLoop();
+    // Start the application loop with our app function
+    runApplicationLoop(appFunction);
 
-        // exercise task operations
-        if (!gExitApp && gAppStatus != COPS_QUERY) {
-            queueMeasureNow(NULL);
-            queueLocationNow(NULL);
-        }
-    }
-
-    writeLog("Application closing down...");
+    // all done, close down and finalise    
     finalise(SHUTDOWN);
 }

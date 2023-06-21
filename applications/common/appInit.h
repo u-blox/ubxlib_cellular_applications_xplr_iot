@@ -27,6 +27,10 @@ void dwellAppLoop(void);
 int32_t setAppDwellTime(commandParamsList_t *params);
 int32_t setAppLogLevel(commandParamsList_t *params);
 
+void setButtonTwoFunction(void (*func)(void));
+void runApplicationLoop(bool (*appFunc)(void));
+void pauseMainLoop(bool state);
+
 bool startupFramework(void);
 void finalise(applicationStates_t appState);
 

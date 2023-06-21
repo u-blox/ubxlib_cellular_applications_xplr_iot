@@ -54,6 +54,9 @@ static buttonNumber_t pressedButton = NO_BUTTON;
 
 static int32_t appDwellTimeMS = 5000;
 
+// This flag will pause the main application loop
+static bool pauseMainLoopIndicator = false;
+
 /* ----------------------------------------------------------------
  * STATIC FUNCTIONS
  * -------------------------------------------------------------- */
@@ -73,6 +76,8 @@ uDeviceHandle_t gDeviceHandle;
 // This flag is set to true when Button #1 is pressed.
 bool gExitApp = false;
 bool gExitFast = false; // don't wait for closing app Tasks, just close the log file and exit.
+
+void (*buttonTwoFunc)(void) = NULL;
 
 // reference to our mqtt credentials which are used for the application's publish/subscription
 extern const char *mqttCredentials[];
@@ -138,8 +143,13 @@ static void button_pressed(int buttonNo, uint32_t holdTime)
                 gExitApp = true;
                 break;
 
-            case BUTTON_2:
-                //queueNetworkScan(NULL);
+            case BUTTON_2:                
+                if (buttonTwoFunc != NULL) {
+                    writeLog("Button #2 pressed");
+                    buttonTwoFunc();
+                } else {
+                    printDebug("No function defined for Button #2");
+                }
                 break;
 
             default:
@@ -194,6 +204,45 @@ void dwellAppLoop(void)
             (dwellTimeMS == appDwellTimeMS));
 
     printDebug("*** Application Tick ***\n");
+}
+
+/// @brief Sets the function which handles the Button #2 function
+/// @param func The function pointer for button #2 code
+void setButtonTwoFunction(void (*func)(void))
+{
+    buttonTwoFunc = func;
+}
+
+/// @brief Method of pausing the running of the main loop. 
+///        Useful for when there are other long running activities
+///        which need to stop the main loop
+/// @param state A flag to indicate if the main loop is paused or not
+void pauseMainLoop(bool state)
+{
+    pauseMainLoopIndicator = state;
+    printDebug("Main loop %s", state ? "is paused" : "is unpaused");
+}
+
+/// @brief This is the main application loop which runs the appFunc which is 
+///        defined in the application main.c module.
+/// @param appFunc The function pointer of the app event code
+void runApplicationLoop(bool (*appFunc)(void))
+{
+    while(!gExitApp) {
+        dwellAppLoop();
+
+        if (gExitApp) return;
+
+        if (pauseMainLoopIndicator) {
+            writeDebug("Application loop paused.");
+            continue;
+        }
+
+        if (!appFunc()) {
+            gExitApp = true;
+            writeInfo("Application function stopped the app loop");
+        }
+    }
 }
 
 /// @brief Reads the serial number from the module

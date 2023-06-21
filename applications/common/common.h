@@ -119,6 +119,9 @@ extern uDeviceHandle_t gDeviceHandle;
 // This flag is set to true when the application's tasks should exit
 extern bool gExitApp;
 
+// This flag is for pausing the normal main loop activity
+extern bool gPauseMainLoop;
+
 // This flag represents the network's registration status
 extern bool gIsNetworkUp;
 

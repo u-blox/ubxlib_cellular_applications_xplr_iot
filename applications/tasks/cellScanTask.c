@@ -74,7 +74,7 @@ static bool keepGoing(void *pParam)
         gAppStatus = COPS_QUERY;
         printDebug("Still scanning for networks...");
     } else {
-        printLog("Scanning for networks cancelled");
+        writeInfo("Scanning for networks cancelled");
     }
 
     return kg;
@@ -90,6 +90,8 @@ static void doCellScan(void *pParams)
 
     U_PORT_MUTEX_LOCK(TASK_MUTEX);
     SET_APP_STATUS(COPS_QUERY);
+    
+    pauseMainLoop(true);
 
     writeLog("Scanning for networks...");
     for (count = uCellNetScanGetFirst(gDeviceHandle, internalBuffer,
@@ -123,6 +125,8 @@ static void doCellScan(void *pParams)
 
     // reset the stop cell scan indicator
     stopCellScan = false;
+
+    pauseMainLoop(false);
 
     REVERT_APP_STATUS();
     U_PORT_MUTEX_UNLOCK(TASK_MUTEX);
