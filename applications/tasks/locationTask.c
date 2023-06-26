@@ -157,6 +157,7 @@ static void getLocation(void *pParams)
     // SET_APP_STATUS(START_LOCATION);
     gettingLocation = true;
 
+    printDebug("Requesting location information...");
     int32_t errorCode = uLocationGet(gnssHandle, U_LOCATION_TYPE_GNSS,
                                          NULL, NULL, &location, keepGoing);
     if (errorCode == 0) {

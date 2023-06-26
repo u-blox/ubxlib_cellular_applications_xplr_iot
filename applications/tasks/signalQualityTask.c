@@ -82,7 +82,7 @@ static void measureSignalQuality(void)
 
     U_PORT_MUTEX_LOCK(TASK_MUTEX);
 
-    printLog("Fetching signal quality measurements...");
+    printDebug("Fetching signal quality measurements...");
 
     SET_APP_STATUS(START_SIGNAL_QUALITY);
 

@@ -58,6 +58,11 @@ static callbackCommand_t callbacks[] = {
 };
 
 /* ----------------------------------------------------------------
+ * EXTERNAL FUNCTIONS
+ * -------------------------------------------------------------- */
+extern void pauseMainLoop(bool state);
+
+/* ----------------------------------------------------------------
  * STATIC FUNCTIONS
  * -------------------------------------------------------------- */
 
@@ -85,29 +90,41 @@ static void doCellScan(void *pParams)
     int32_t found = 0;
     int32_t count = 0;
     char internalBuffer[64];
-    char payload[200];
+    char payload[100];
     char mccMnc[U_CELL_NET_MCC_MNC_LENGTH_BYTES];
+    uCellNetRat_t rat = U_CELL_NET_RAT_UNKNOWN_OR_NOT_USED;
 
     U_PORT_MUTEX_LOCK(TASK_MUTEX);
     SET_APP_STATUS(COPS_QUERY);
     
     pauseMainLoop(true);
 
+    char timestamp[TIMESTAMP_MAX_LENTH_BYTES];
+    getTimeStamp(timestamp);
+
+    char format[] = "{"                 \
+            "\"Timestamp\":\"%s\", "    \
+            "\"CellSCan\":{"            \
+                "\"Name\":\"%s\", "     \
+                "\"ubxlibRAT\":\"%d\", "     \
+                "\"MCCMNC\":\"%s\"}"   \
+        "}";
+
     writeLog("Scanning for networks...");
     for (count = uCellNetScanGetFirst(gDeviceHandle, internalBuffer,
-                                            sizeof(internalBuffer), mccMnc, NULL,
+                                            sizeof(internalBuffer), mccMnc, &rat,
                                             keepGoing);
             count > 0;
-            count = uCellNetScanGetNext(gDeviceHandle, internalBuffer, sizeof(internalBuffer), mccMnc, NULL)) {
+            count = uCellNetScanGetNext(gDeviceHandle, internalBuffer, sizeof(internalBuffer), mccMnc, &rat)) {
 
         found++;
-        snprintf(payload, sizeof(payload), "Cell Scan Result: found '%s', MCC/MNC: %s", internalBuffer, mccMnc);
+        snprintf(payload, sizeof(payload), format, timestamp, internalBuffer, rat, mccMnc);
         writeAlways(payload);
         sendMQTTMessage(topicName, payload, U_MQTT_QOS_AT_MOST_ONCE, false);
     }
 
     if (!gExitApp) {
-        if(count < 0) {
+        if(count < 0 && count != U_CELL_ERROR_NOT_FOUND) {
             snprintf(payload, sizeof(payload), "Cell Scan Result: Error %d", count);
         } else {
             if (found == 0) {
@@ -120,8 +137,7 @@ static void doCellScan(void *pParams)
         snprintf(payload, sizeof(payload), "Cell Scan Result: Cancelled.");
     }
 
-    writeAlways(payload);
-    sendMQTTMessage(topicName, payload, U_MQTT_QOS_AT_MOST_ONCE, false);
+    writeInfo(payload);
 
     // reset the stop cell scan indicator
     stopCellScan = false;

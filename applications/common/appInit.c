@@ -220,7 +220,7 @@ void setButtonTwoFunction(void (*func)(void))
 void pauseMainLoop(bool state)
 {
     pauseMainLoopIndicator = state;
-    printDebug("Main loop %s", state ? "is paused" : "is unpaused");
+    printInfo("Main application loop %s", state ? "is paused" : "is unpaused");
 }
 
 /// @brief This is the main application loop which runs the appFunc which is 
