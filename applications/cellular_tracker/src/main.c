@@ -47,7 +47,7 @@ static callbackCommand_t callbacks[] = {
 };
 
 /// @brief The application function(s) which are run every appDwellTime
-/// @return A flag to indicate the application should continue
+/// @return A flag to indicate the application should continue (true)
 bool appFunction(void)
 {
     queueMeasureNow(NULL);

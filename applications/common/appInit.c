@@ -311,6 +311,10 @@ static void dwellAppLoop(void)
 /* ----------------------------------------------------------------
  * PUBLIC FUNCTIONS
  * -------------------------------------------------------------- */
+
+/// @brief Sets the time between each main loop execution
+/// @param params The dwell time parameter for the dwell time
+/// @return 0 if successful, or failure if invalid parameters
 int32_t setAppDwellTime(commandParamsList_t *params)
 {
     int32_t timeMS = getParamValue(params, 1, 5000, 60000, 30000);
@@ -326,6 +330,9 @@ int32_t setAppDwellTime(commandParamsList_t *params)
     return U_ERROR_COMMON_SUCCESS;
 }
 
+/// @brief Sets the application logging level
+/// @param params The log level parameter for the dwell time
+/// @return 0 if successful, or failure if invalid parameters
 int32_t setAppLogLevel(commandParamsList_t *params)
 {
     logLevels_t logLevel = (logLevels_t) getParamValue(params, 1, (int32_t) eTRACE, (int32_t) eMAXLOGLEVELS, (int32_t) eINFO);
@@ -383,8 +390,6 @@ void runApplicationLoop(bool (*appFunc)(void))
     }
 }
 
-
-
 /// @brief Sets the application status, waits for the tasks and closes the log
 /// @param appState The application status to set for the shutdown
 void finalise(applicationStates_t appState)
@@ -407,6 +412,8 @@ void finalise(applicationStates_t appState)
     while(true);
 }
 
+/// @brief Starts the application framework
+/// @return true if successful, false otherwise
 bool startupFramework(void)
 {
     int32_t errorCode;
