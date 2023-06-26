@@ -39,6 +39,12 @@
 #define _CONFIG_H_
 
 /* ----------------------------------------------------------------
+ * Application Version number - this includes the common/tasks too
+ * -------------------------------------------------------------- */
+#define APP_NAME    "Cellular Tracker"
+#define APP_VERSION "v0.9"
+
+/* ----------------------------------------------------------------
  * DEBUG LEVEL SETTING - This can be changed remotely using
  *                       "SET_LOG_LEVEL" command via the
  *                        APP_CONTROL MQTT topic

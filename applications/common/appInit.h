@@ -20,10 +20,6 @@
 
 int32_t getSerialNumber(void);
 
-int32_t initCellularDevice(void);
-bool initXplrDevice(void);
-
-void dwellAppLoop(void);
 int32_t setAppDwellTime(commandParamsList_t *params);
 int32_t setAppLogLevel(commandParamsList_t *params);
 

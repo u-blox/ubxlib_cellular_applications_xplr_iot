@@ -158,96 +158,9 @@ static void button_pressed(int buttonNo, uint32_t holdTime)
     }
 }
 
-/* ----------------------------------------------------------------
- * PUBLIC FUNCTIONS
- * -------------------------------------------------------------- */
-int32_t setAppDwellTime(commandParamsList_t *params)
-{
-    int32_t timeMS = getParamValue(params, 1, 5000, 60000, 30000);
-
-    if (timeMS < APP_DWELL_TIME_MS_MINIMUM) {
-        writeWarn("Failed to set App Dwell Time, %d is less than minimum (%d ms)", timeMS, APP_DWELL_TIME_MS_MINIMUM);
-        return U_ERROR_COMMON_INVALID_PARAMETER;
-    }
-
-    appDwellTimeMS = timeMS;
-    writeLog("Setting App Dwell Time to: %d\n", timeMS);
-
-    return U_ERROR_COMMON_SUCCESS;
-}
-
-int32_t setAppLogLevel(commandParamsList_t *params)
-{
-    logLevels_t logLevel = (logLevels_t) getParamValue(params, 1, (int32_t) eTRACE, (int32_t) eMAXLOGLEVELS, (int32_t) eINFO);
-
-    if (logLevel < eTRACE) {
-        writeWarn("Failed to set App Log Level %d. Min: %d, Max: %d", logLevel, eTRACE, eMAXLOGLEVELS);
-        return U_ERROR_COMMON_INVALID_PARAMETER;
-    }
-
-    setLogLevel(logLevel);
-
-    return U_ERROR_COMMON_SUCCESS;
-}
-
-/// @brief Dwells for appDwellTimeMS time, and exits if this time changes
-void dwellAppLoop(void)
-{
-    int32_t tick = 0;
-    int32_t dwellTimeMS = appDwellTimeMS;
-
-    do
-    {
-        uPortTaskBlock(APP_DWELL_TICK_MS);
-        tick = tick + APP_DWELL_TICK_MS;
-    } while((tick < dwellTimeMS) &&
-            (dwellTimeMS == appDwellTimeMS));
-
-    printDebug("*** Application Tick ***\n");
-}
-
-/// @brief Sets the function which handles the Button #2 function
-/// @param func The function pointer for button #2 code
-void setButtonTwoFunction(void (*func)(void))
-{
-    buttonTwoFunc = func;
-}
-
-/// @brief Method of pausing the running of the main loop. 
-///        Useful for when there are other long running activities
-///        which need to stop the main loop
-/// @param state A flag to indicate if the main loop is paused or not
-void pauseMainLoop(bool state)
-{
-    pauseMainLoopIndicator = state;
-    printInfo("Main application loop %s", state ? "is paused" : "is unpaused");
-}
-
-/// @brief This is the main application loop which runs the appFunc which is 
-///        defined in the application main.c module.
-/// @param appFunc The function pointer of the app event code
-void runApplicationLoop(bool (*appFunc)(void))
-{
-    while(!gExitApp) {
-        dwellAppLoop();
-
-        if (gExitApp) return;
-
-        if (pauseMainLoopIndicator) {
-            writeDebug("Application loop paused.");
-            continue;
-        }
-
-        if (!appFunc()) {
-            gExitApp = true;
-            writeInfo("Application function stopped the app loop");
-        }
-    }
-}
-
 /// @brief Reads the serial number from the module
 /// @return The length of the serial number, or negative on error
-int32_t getSerialNumber(void)
+static int32_t getSerialNumber(void)
 {
     int32_t len = uSecurityGetSerialNumber(gDeviceHandle, gSerialNumber);
     if (len > 0) {
@@ -264,7 +177,7 @@ int32_t getSerialNumber(void)
 }
 
 /// @brief Initiate the UBXLIX API
-int32_t initCellularDevice(void)
+static int32_t initCellularDevice(void)
 {
     int32_t errorCode;
 
@@ -298,7 +211,7 @@ int32_t initCellularDevice(void)
 }
 
 /// @brief Initialises the XPLR device LEDs, Buttons and file system and handles the startup button press
-bool initXplrDevice(void)
+static bool initXplrDevice(void)
 {
     if (uPortInit() != 0) {
         printFatal("* Failed to initiate UBXLIB - not running application!");
@@ -340,6 +253,11 @@ bool initXplrDevice(void)
     // Display the file system free size
     displayFileSpace(LOG_FILENAME);
 
+    return true;
+}
+
+static bool loadConfigFiles(void)
+{
     // Save the mqtt credentials file (if present)
     if (mqttCredentials != NULL) {
         int32_t saveResult = saveConfigFile(MQTT_CREDENTIALS_FILENAME,
@@ -364,11 +282,108 @@ bool initXplrDevice(void)
     // this will only print if logging is set to DEBUG or higher - security!
     printConfiguration();
 
-    // now allow the buttons to run their commands
-    buttonCommandEnabled = true;
-
     return true;
 }
+
+static void displayAppVersion()
+{
+    writeInfo("**************************************************");
+    writeInfo("%s %s", APP_NAME, APP_VERSION);
+    writeInfo("**************************************************\n");
+}
+
+/// @brief Dwells for appDwellTimeMS time, and exits if this time changes
+static void dwellAppLoop(void)
+{
+    int32_t tick = 0;
+    int32_t dwellTimeMS = appDwellTimeMS;
+
+    do
+    {
+        uPortTaskBlock(APP_DWELL_TICK_MS);
+        tick = tick + APP_DWELL_TICK_MS;
+    } while((tick < dwellTimeMS) &&
+            (dwellTimeMS == appDwellTimeMS));
+
+    printDebug("*** Application Tick ***\n");
+}
+
+/* ----------------------------------------------------------------
+ * PUBLIC FUNCTIONS
+ * -------------------------------------------------------------- */
+int32_t setAppDwellTime(commandParamsList_t *params)
+{
+    int32_t timeMS = getParamValue(params, 1, 5000, 60000, 30000);
+
+    if (timeMS < APP_DWELL_TIME_MS_MINIMUM) {
+        writeWarn("Failed to set App Dwell Time, %d is less than minimum (%d ms)", timeMS, APP_DWELL_TIME_MS_MINIMUM);
+        return U_ERROR_COMMON_INVALID_PARAMETER;
+    }
+
+    appDwellTimeMS = timeMS;
+    writeLog("Setting App Dwell Time to: %d\n", timeMS);
+
+    return U_ERROR_COMMON_SUCCESS;
+}
+
+int32_t setAppLogLevel(commandParamsList_t *params)
+{
+    logLevels_t logLevel = (logLevels_t) getParamValue(params, 1, (int32_t) eTRACE, (int32_t) eMAXLOGLEVELS, (int32_t) eINFO);
+
+    if (logLevel < eTRACE) {
+        writeWarn("Failed to set App Log Level %d. Min: %d, Max: %d", logLevel, eTRACE, eMAXLOGLEVELS);
+        return U_ERROR_COMMON_INVALID_PARAMETER;
+    }
+
+    setLogLevel(logLevel);
+
+    return U_ERROR_COMMON_SUCCESS;
+}
+
+/// @brief Sets the function which handles the Button #2 function
+/// @param func The function pointer for button #2 code
+void setButtonTwoFunction(void (*func)(void))
+{
+    buttonTwoFunc = func;
+}
+
+/// @brief Method of pausing the running of the main loop. 
+///        Useful for when there are other long running activities
+///        which need to stop the main loop
+/// @param state A flag to indicate if the main loop is paused or not
+void pauseMainLoop(bool state)
+{
+    pauseMainLoopIndicator = state;
+    printInfo("Main application loop %s", state ? "is paused" : "is unpaused");
+}
+
+/// @brief This is the main application loop which runs the appFunc which is 
+///        defined in the application main.c module.
+/// @param appFunc The function pointer of the app event code
+void runApplicationLoop(bool (*appFunc)(void))
+{
+    // now allow the buttons to run their commands
+    buttonCommandEnabled = true;
+    printInfo("Buttons #1 and #2 are now enabled");
+
+    while(!gExitApp) {
+        dwellAppLoop();
+
+        if (gExitApp) return;
+
+        if (pauseMainLoopIndicator) {
+            writeDebug("Application loop paused.");
+            continue;
+        }
+
+        if (!appFunc()) {
+            gExitApp = true;
+            writeInfo("Application function stopped the app loop");
+        }
+    }
+}
+
+
 
 /// @brief Sets the application status, waits for the tasks and closes the log
 /// @param appState The application status to set for the shutdown
@@ -398,6 +413,11 @@ bool startupFramework(void)
 
     // initialise our LEDs and start up button commmands
     if (!initXplrDevice())
+        return false;
+
+    displayAppVersion();
+
+    if (!loadConfigFiles())
         return false;
 
     writeLog("Starting LED Task...");

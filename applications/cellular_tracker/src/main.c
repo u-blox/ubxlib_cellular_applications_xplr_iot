@@ -34,6 +34,8 @@
 #include "locationTask.h"
 #include "cellScanTask.h"
 
+// Application name and version number is in the config.h file
+
 /* ----------------------------------------------------------------
  * Remote control callbacks for the main application
  * Add your application topic message callbacks here
@@ -75,12 +77,12 @@ void main(void)
     // config.h file. This needs to run for MQTT messages to be published and
     // for remote control messages to be handled
     runTask(MQTT_TASK);
+    
+    // Subscribe to the main AppControl topic for remote control the main application (this)
+    subscribeToTopicAsync(APP_CONTROL_TOPIC, U_MQTT_QOS_AT_MOST_ONCE, callbacks, NUM_ELEMENTS(callbacks));
 
     // Set button two to point to the queueCellScan function
     setButtonTwoFunction(buttonTwo);
-
-    // Subscribe to the main AppControl topic for remote control the main application (this)
-    subscribeToTopicAsync(APP_CONTROL_TOPIC, U_MQTT_QOS_AT_MOST_ONCE, callbacks, NUM_ELEMENTS(callbacks));
 
     // Start the application loop with our app function
     runApplicationLoop(appFunction);
