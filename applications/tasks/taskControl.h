@@ -98,7 +98,7 @@
                                 }                                                                       \
                                 return errorCode;
 
-#define FINALISE_TASK           writeDebug("%s task loop has stopped", TASK_NAME);                      \
+#define FINALIZE_TASK           writeDebug("%s task loop has stopped", TASK_NAME);                      \
                                 if (taskConfig->taskStoppedCallback != NULL) {                          \
                                         writeDebug("Running %s task stopped callback...", TASK_NAME);   \
                                         taskConfig->taskStoppedCallback(NULL);                          \

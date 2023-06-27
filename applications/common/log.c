@@ -32,8 +32,8 @@
  * -------------------------------------------------------------- */
 
 /// DO NOT PUT printLog() INSIDE this MUTEX LOCK!!!
-#define MUTEX_LOCK if (pLogMutex != NULL) uPortMutexLock(pLogMutex)
-#define MUTEX_UNLOCK if (pLogMutex != NULL) uPortMutexUnlock(pLogMutex)
+#define MUTEX_LOCK if (pLogMutex != NULL) uPortMutexLock(pLogMutex); {
+#define MUTEX_UNLOCK } if (pLogMutex != NULL) uPortMutexUnlock(pLogMutex);
 
 #define LOGBUFF1SIZE 1024
 #define LOGBUFF2SIZE 2048
@@ -131,8 +131,8 @@ void _writeLog(const char *log, logLevels_t level, bool writeToFile, ...)
     if (level < gLogLevel)
         return;
 
-    MUTEX_LOCK;
-    {
+    MUTEX_LOCK
+
         // DO NOT PUT PRINTLOG OR WRITELOG MARCOS INSIDE
         // THIS MUTEX LOCK - *ONLY* USE PRINTF() !!!!!!
 
@@ -159,24 +159,30 @@ void _writeLog(const char *log, logLevels_t level, bool writeToFile, ...)
 
         // DO NOT PUT PRINTLOG OR WRITELOG MARCOS INSIDE
         // THIS MUTEX LOCK - *ONLY* USE PRINTF() !!!!!!
-    }
+    
     MUTEX_UNLOCK;
 }
 
 /// @brief Close the log file
-void closeLog(void)
+void closeLogFile(bool displayWarning)
 {
     if (!logFileOpen)
         return;
 
-    printLog("Closing log file... PLEASE WAIT!!!");
-    MUTEX_LOCK;
+    if (displayWarning)
+        printf("\nClosing log file... PLEASE WAIT!!!\n");
+    
+    MUTEX_LOCK
+    
+        fs_sync(&logFile);
 
-    logFileOpen = false;
-    fs_close(&logFile);
-
-    MUTEX_UNLOCK;
-    printLog("Log file is now closed.");
+        logFileOpen = false;
+        fs_close(&logFile);
+    
+    MUTEX_UNLOCK
+    
+    if (displayWarning)
+        printf("\nLog file is now closed.\n");
 }
 
 void displayLogFile(void)

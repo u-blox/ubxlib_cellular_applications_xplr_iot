@@ -240,7 +240,7 @@ static void taskLoop(void *pParameters)
     deRegisterFromNetwork();
 
     U_PORT_MUTEX_UNLOCK(TASK_MUTEX);
-    FINALISE_TASK;
+    FINALIZE_TASK;
 }
 
 static int32_t initQueue()

@@ -123,7 +123,7 @@ static void taskLoop(void *pParameters)
     }
 
     U_PORT_MUTEX_UNLOCK(TASK_MUTEX);
-    FINALISE_TASK;
+    FINALIZE_TASK;
 }
 
 

@@ -215,7 +215,7 @@ static void taskLoop(void *pParameters)
         dwellTask(taskConfig, isNotExiting);
     }
 
-    FINALISE_TASK;
+    FINALIZE_TASK;
 }
 
 static int32_t initQueue()

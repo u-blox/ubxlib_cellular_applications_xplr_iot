@@ -404,7 +404,7 @@ static void taskLoop(void *pParameters)
     downlinkMessage = NULL;
 
     U_PORT_MUTEX_UNLOCK(TASK_MUTEX);
-    FINALISE_TASK;
+    FINALIZE_TASK;
 }
 
 static int32_t initQueue()
@@ -504,8 +504,10 @@ static void subscribeToTopic(void *pParam)
         }
     }
 
-    if (errorCode != 0) {
-        writeError("Subscribing a callback to topic %s failed with erorr code %d", topicCallback->topicName, errorCode);
+    if (errorCode != 0 ) {
+        if (!gExitApp)
+            writeError("Subscribing a callback to topic %s failed with erorr code %d", topicCallback->topicName, errorCode);
+    
         goto cleanUp;
     }
 

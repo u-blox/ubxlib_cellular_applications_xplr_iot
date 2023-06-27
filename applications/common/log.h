@@ -89,7 +89,8 @@ void displayLogFile(void);
 void deleteFile(const char *pFilename);
 
 /// @brief Close the log file
-void closeLog(void);
+/// @param displayWarning Displays a warning message about waiting while closing the file
+void closeLogFile(bool displayWarning);
 
 /// @brief Display the free space and log file size
 /// @param pFilename The log filename to check
