@@ -111,7 +111,7 @@ int openFile(const char *filename, struct fs_file_t *file)
 {
     fs_file_t_init(file);
     const char *path = extFsPath(filename);
-    return fs_open(file, path, FS_O_CREATE | FS_O_RDWR);
+    return fs_open(file, path, FS_O_APPEND | FS_O_RDWR);
 }
 
 void setLogLevel(logLevels_t logLevel)

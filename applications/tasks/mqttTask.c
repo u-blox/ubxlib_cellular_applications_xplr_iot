@@ -29,6 +29,7 @@
  * -------------------------------------------------------------- */
 #define MQTT_TASK_STACK_SIZE 1024
 #define MQTT_TASK_PRIORITY 5
+
 #define MQTT_QUEUE_STACK_SIZE QUEUE_STACK_SIZE_DEFAULT
 #define MQTT_QUEUE_PRIORITY 5
 #define MQTT_QUEUE_SIZE 10
@@ -76,6 +77,9 @@ typedef struct MQTTSN_TOPIC_NAME_NODE {
  * STATIC VARIABLES
  * -------------------------------------------------------------- */
 static uMqttClientContext_t *pContext = NULL;
+static uSecurityTlsSettings_t tlsSettings = U_SECURITY_TLS_SETTINGS_DEFAULT;
+static uSecurityTlsCipherSuites_t cipherSuites;
+
 static int32_t messagesToRead = 0;
 static char topicString[MAX_TOPIC_SIZE];
 static char *downlinkMessage;
@@ -185,37 +189,13 @@ static int32_t connectBroker(void)
     setIntParamFromConfig("MQTT_TIMEOUT", &(connection.inactivityTimeoutSeconds));
     setBoolParamFromConfig("MQTT_KEEPALIVE", "TRUE", &(connection.keepAlive));
 
-    const char *securityProfile = getConfig("MQTT_SECURITY_PROFILE");
-    if (securityProfile != NULL) {
-        int32_t profileId = atoi(securityProfile);
-
-        // HACK: Here we hack in the security profile ID into ubxlib
-        // ubxlib does not [yet] support just using a security profile id
-        uCellSecTlsContext_t cellSecContext;
-        cellSecContext.profileId = profileId;
-
-        uSecurityTlsContext_t secContext;
-        secContext.pNetworkSpecific = &cellSecContext;
-
-        // temporarily set the security context to allow the uMqttClientConnect to see the profile ID!
-        pContext->pSecurityContext = &secContext;
-    }
-
     writeLog("Connecting to %s on %s...", MQTT_TYPE_NAME, connection.pBrokerNameStr);
 
     int32_t errorCode = uMqttClientConnect(pContext, &connection);
     if (errorCode != 0) {
         writeError("Failed to connect to the %s: %d", MQTT_TYPE_NAME, errorCode);
-    }
-
-    // reverting the security profile Id HACK above
-    if (securityProfile != NULL)
-        pContext->pSecurityContext = NULL;
-
-    if (errorCode != 0)
         return errorCode;
-
-    writeLog("Connected to %s", MQTT_TYPE_NAME);
+    }
 
     errorCode = uMqttClientSetDisconnectCallback(pContext, disconnectCallback, NULL);
     if (errorCode != 0) {
@@ -223,12 +203,13 @@ static int32_t connectBroker(void)
         return errorCode;
     }
 
-     errorCode = uMqttClientSetMessageCallback(pContext, downlinkMessageCallback, NULL);
+    errorCode = uMqttClientSetMessageCallback(pContext, downlinkMessageCallback, NULL);
     if (errorCode != 0) {
         writeError("Failed to set MQTT downlink message callback: %d", errorCode);
         return errorCode;
     }
 
+    writeLog("Connected to %s", MQTT_TYPE_NAME);
     gAppStatus = MQTT_CONNECTED;
 
     return 0;
@@ -400,7 +381,8 @@ static void taskLoop(void *pParameters)
             gAppStatus = MQTT_DISCONNECTED;
             if (gIsNetworkUp && gIsNetworkSignalValid) {
                 writeLog("MQTT client disconnected, going to try to connect...");
-                connectBroker();
+                if (connectBroker() != U_ERROR_COMMON_SUCCESS)
+                    uPortTaskBlock(5000);
             } else {
                 writeDebug("Can't connect to %s, network is still not available...", MQTT_TYPE_NAME);
                 uPortTaskBlock(2000);
@@ -617,6 +599,71 @@ cleanup:
     return errorCode;
 }
 
+static void setSecuritySettings(void)
+{
+    int32_t cert_value_level;
+    setIntParamFromConfig("SECURITY_CERT_VALID_LEVEL", &cert_value_level);
+    tlsSettings.certificateCheck = cert_value_level;
+
+    int32_t tls_version;
+    setIntParamFromConfig("SECURITY_TLS_VERSION", &tls_version);
+    tlsSettings.tlsVersionMin = tls_version;
+
+    int32_t cipher;
+    setIntParamFromConfig("SECURITY_CIPHER_SUITE", &cipher);
+    if (cipher == 0) {
+        cipherSuites.num = 0;
+    } else {
+        cipherSuites.num = 1;
+        cipherSuites.suite[0] = cipher;
+    }
+    tlsSettings.cipherSuites = cipherSuites;
+    
+    const char *client_name = getConfig("SECURITY_CLIENT_NAME");
+    tlsSettings.pClientCertificateName = client_name;
+
+    const char *client_key = getConfig("SECURITY_CLIENT_KEY");
+    tlsSettings.pClientPrivateKeyName = client_key;
+    
+    const char *server_name_ind = getConfig("SECURITY_SERVER_NAME_IND");
+    tlsSettings.pSni = server_name_ind;
+}
+
+static int32_t initMQTTClient(void)
+{
+    int32_t errorCode = U_ERROR_COMMON_SUCCESS;
+
+    downlinkMessage = pUPortMalloc(MAX_MESSAGE_SIZE);
+    if (downlinkMessage == NULL) {
+        writeFatal("Failed to allocate MQTT downlink message buffer");
+        errorCode = U_ERROR_COMMON_NO_MEMORY;
+        goto cleanUp;
+    }
+
+    bool security = false;
+    setBoolParamFromConfig("MQTT_SECURITY", "TRUE", &security);
+    if (security) {
+        setSecuritySettings();
+        pContext = pUMqttClientOpen(gDeviceHandle, &tlsSettings);
+    }
+    else
+        pContext = pUMqttClientOpen(gDeviceHandle, NULL);
+    
+    if (pContext == NULL) {
+        writeFatal("Failed to open the MQTT client");
+        errorCode = U_ERROR_COMMON_NOT_RESPONDING;
+        goto cleanUp;
+    }
+
+cleanUp:
+    if (errorCode != 0) {
+        uPortFree(downlinkMessage);
+        downlinkMessage = NULL;
+    }
+
+    return errorCode;
+}
+
 /* ----------------------------------------------------------------
  * PUBLIC FUNCTIONS
  * -------------------------------------------------------------- */
@@ -751,8 +798,9 @@ int32_t initMQTTTask(taskConfig_t *config)
     int32_t result = U_ERROR_COMMON_SUCCESS;
 
     writeLog("Initializing the %s task...", TASK_NAME);
-    CHECK_SUCCESS(initMutex);
-    CHECK_SUCCESS(initQueue);
+    EXIT_ON_FAILURE(initMutex);
+    EXIT_ON_FAILURE(initQueue);
+    EXIT_ON_FAILURE(initMQTTClient);
 
     return result;
 }
@@ -765,13 +813,6 @@ int32_t startMQTTTaskLoop(commandParamsList_t *params)
 
     int32_t errorCode = U_ERROR_COMMON_SUCCESS;
 
-    pContext = pUMqttClientOpen(gDeviceHandle, NULL);
-    if (pContext == NULL) {
-        writeFatal("Failed to open the MQTT client");
-        errorCode = U_ERROR_COMMON_NOT_RESPONDING;
-        goto cleanUp;
-    }
-
     errorCode = uPortTaskCreate(runTaskAndDelete,
                                 TASK_NAME,
                                 MQTT_TASK_STACK_SIZE,
@@ -780,21 +821,6 @@ int32_t startMQTTTaskLoop(commandParamsList_t *params)
                                 &TASK_HANDLE);
     if (errorCode != 0) {
         writeError("Failed to start the %s Task (%d).", TASK_NAME, errorCode);
-        goto cleanUp;
-    }
-
-    downlinkMessage = pUPortMalloc(MAX_MESSAGE_SIZE);
-    if (downlinkMessage == NULL) {
-        writeFatal("Failed to allocate MQTT downlink message buffer");
-        errorCode = U_ERROR_COMMON_NO_MEMORY;
-        goto cleanUp;
-    }
-
-cleanUp:
-    if (errorCode != 0) {
-        uPortTaskDelete(TASK_HANDLE);
-        uPortFree(downlinkMessage);
-        downlinkMessage = NULL;
     }
 
     return errorCode;

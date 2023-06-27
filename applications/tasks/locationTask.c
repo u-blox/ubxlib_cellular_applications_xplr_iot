@@ -32,6 +32,7 @@
  * -------------------------------------------------------------- */
 #define LOCATION_TASK_STACK_SIZE (3 * 1024)
 #define LOCATION_TASK_PRIORITY 5
+
 #define LOCATION_QUEUE_STACK_SIZE QUEUE_STACK_SIZE_DEFAULT
 #define LOCATION_QUEUE_PRIORITY 5
 #define LOCATION_QUEUE_SIZE 5
@@ -289,8 +290,8 @@ int32_t initLocationTask(taskConfig_t *config)
     CREATE_TOPIC_NAME;
 
     writeLog("Initializing the %s task...", TASK_NAME);
-    CHECK_SUCCESS(initMutex);
-    CHECK_SUCCESS(initQueue);
+    EXIT_ON_FAILURE(initMutex);
+    EXIT_ON_FAILURE(initQueue);
 
     result = startGNSS();
     if (result < 0) {

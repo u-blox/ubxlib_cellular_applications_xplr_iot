@@ -30,13 +30,13 @@
 /* ----------------------------------------------------------------
  * DEFINES
  * -------------------------------------------------------------- */
-#define EXAMPLE_QUEUE_STACK_SIZE QUEUE_STACK_SIZE_DEFAULT
-#define EXAMPLE_QUEUE_PRIORITY 5
-#define EXAMPLE_QUEUE_SIZE 1
-
 // not all tasks will have a task loop if it only uses a queue
 #define EXAMPLE_TASK_STACK_SIZE (1 * 1024)
 #define EXAMPLE_TASK_PRIORITY 5
+
+#define EXAMPLE_QUEUE_STACK_SIZE QUEUE_STACK_SIZE_DEFAULT
+#define EXAMPLE_QUEUE_PRIORITY 5
+#define EXAMPLE_QUEUE_SIZE 1
 
 /* ----------------------------------------------------------------
  * TASK COMMON VARIABLES
@@ -155,8 +155,8 @@ int32_t initExampleTask(taskConfig_t *config)
     CREATE_TOPIC_NAME;
 
     writeLog("Initializing the %s task...", TASK_NAME);
-    CHECK_SUCCESS(initMutex);
-    CHECK_SUCCESS(initQueue);
+    EXIT_ON_FAILURE(initMutex);
+    EXIT_ON_FAILURE(initQueue);
 
     char tp[MAX_TOPIC_NAME_SIZE];
     snprintf(tp, MAX_TOPIC_NAME_SIZE, "%sControl", TASK_NAME);

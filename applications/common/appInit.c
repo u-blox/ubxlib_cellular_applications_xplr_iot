@@ -34,7 +34,9 @@ typedef enum {
 /* ----------------------------------------------------------------
  * DEFINES
  * -------------------------------------------------------------- */
-#define STARTUP_DELAY 250        // 250 * 20ms => 5 seconds
+//#define UBXLIB_LOGGING_ON       // comment out for no ubxlib logging
+
+#define STARTUP_DELAY 250       // 250 * 20ms => 5 seconds
 #define LOG_FILENAME "log.csv"
 #define MQTT_CREDENTIALS_FILENAME "mqttCredentials.txt"
 
@@ -182,7 +184,9 @@ static int32_t initCellularDevice(void)
     int32_t errorCode;
 
     // turn off the UBXLIB printLog() logging
+    #ifndef UBXLIB_LOGGING_ON
     uPortLogOff();
+    #endif
 
     writeLog("Initiating the UBXLIB Device API...");
     errorCode = uDeviceInit();
@@ -427,7 +431,6 @@ bool startupFramework(void)
     if (!loadConfigFiles())
         return false;
 
-    writeLog("Starting LED Task...");
     errorCode = initSingleTask(LED_TASK);
     if (errorCode < 0) {
         writeFatal("* Failed to initialise LED task - not running application!");

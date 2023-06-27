@@ -27,10 +27,11 @@
  * the IMEI of the cellular device being used. So unless you MUST set the clientID for
  * your own MQTT broker, you can leave this parameter NULL.
  *
- * For MQTT brokers that don't use security, set MQTT-SECURITY to NULL
- * For MQTT brokers that require security, set the MQTT-SECURITY to the module's security profile number.
- * NOTE: You will need to have already uploaded certificates and configured this security profile on the
- * cellular device outside of this application.
+ * For MQTT brokers that don't use security, set MQTT_SECURITY to FALSE (or NULL)
+ * For MQTT brokers that require security, set the MQTT_SECURITY to TRUE.
+ * Use the SECURITY_XXXX Parameters to configure the security profile
+ * 
+ * NOTE: You will need to have already uploaded certificates.
  *
  * Missing entries will resolve to NULL if they are used in the application.
  *
@@ -46,6 +47,8 @@ const char *mqtt_credentials[] = NULL       // NULL will cause the application t
 #endif
 
 // This is the Thingstream MQTT-Anywhere configuration.
+// !!! You MUST use "TSUDP" for the APN !!!
+//
 // There is no need for username & password or clientID
 // Thingstream MQTT-Anywhere uses the SIM security from the network operator
 #ifdef MQTT_THINGSTREAM_ANYWHERE
@@ -55,15 +58,22 @@ const char *mqttCredentials[] = {
     "MQTT_USERNAME NULL",
     "MQTT_PASSWORD NULL",
     "MQTT_CLIENTID NULL",
-    "MQTT_SECURITY_PROFILE NULL",       // no security profile
     "MQTT_KEEPALIVE NULL",
     "MQTT_TIMEOUT NULL",
+    "MQTT_SECURITY FALSE",
+    
+    // no need to set or include these as there is no security
+    "SECURITY_CERT_VALID_LEVEL 0",
+    "SECURITY_TLS_VERSION 3",
+    "SECURITY_CIPHER_SUITE 0",
+    "SECURITY_CLIENT_NAME NULL",
+    "SECURITY_CLIENT_KEY NULL",
+    "SECURITY_SERVER_NAME_IND NULL",
 };
 #endif
 
 // This is the Thingstream MQTT-FLEX service configuration.
 // Port 2443 uses TLS security with client certificate and key
-// Need to specify the client certificate and key files in security profile #1
 #ifdef MQTT_THINGSTREAM_FLEX
 const char *mqttCredentials[] = {
     "MQTT_TYPE MQTT",
@@ -71,41 +81,66 @@ const char *mqttCredentials[] = {
     "MQTT_USERNAME NULL",
     "MQTT_PASSWORD NULL",
     "MQTT_CLIENTID NULL",
-    "MQTT_SECURITY_PROFILE 1",       // security profile #1
     "MQTT_KEEPALIVE NULL",
     "MQTT_TIMEOUT NULL",
+    "MQTT_SECURITY TRUE",
+    
+    // Set TLS security and specify the security
+    // manager client certificate name and key 
+    "SECURITY_CERT_VALID_LEVEL 0",
+    "SECURITY_TLS_VERSION 3",
+    "SECURITY_CIPHER_SUITE 0",
+    "SECURITY_CLIENT_NAME device-5378b7ce.pem",
+    "SECURITY_CLIENT_KEY device-5378b7ce.key",
+    "SECURITY_SERVER_NAME_IND mqtt-flex.thingstream.io",
 };
 #endif
 
 // This is the Thingstream MQTT-NOW service configuration.
 // Port 1883 doesn't use TLS security, just authentication
 // Must provide username and password below...
-#ifdef MQTT_THINGSTREAM_NOW_NoTLS_AUTH
+#ifdef MQTT_THINGSTREAM_NOW_NoTLS_Auth
 const char *mqttCredentials[] = {
     "MQTT_TYPE MQTT",
     "MQTT_BROKER_NAME mqtt.thingstream.io:1883",
     "MQTT_USERNAME YOUR-USER-NAME-HERE",
     "MQTT_PASSWORD YOUR-PASSWORD-HERE",
     "MQTT_CLIENTID NULL",
-    "MQTT_SECURITY_PROFILE NULL",       // no security profile
     "MQTT_KEEPALIVE NULL",
-    "MQTT_TIMEOUT NULL",
+    "MQTT_TIMEOUT NULL",    
+    "MQTT_SECURITY FALSE",
+    
+    // no need to set or include these as there is no security
+    "SECURITY_CERT_VALID_LEVEL 0",
+    "SECURITY_TLS_VERSION 3",
+    "SECURITY_CIPHER_SUITE 0",
+    "SECURITY_CLIENT_NAME NULL",
+    "SECURITY_CLIENT_KEY NULL",
+    "SECURITY_SERVER_NAME_IND NULL",
 };
 #endif
 
 // This is the MQTT-NOW service configuration.
 // Port 8883 uses TLS security and authentication
 // Must provide username and password below...
-#ifdef MQTT_THINGSTREAM_NOW_TLS_AUTH
+#ifdef MQTT_THINGSTREAM_NOW_TLS_Auth
 const char *mqttCredentials[] = {
     "MQTT_TYPE MQTT",
     "MQTT_BROKER_NAME mqtt.thingstream.io:8883",
     "MQTT_USERNAME YOUR-USER-NAME-HERE",
     "MQTT_PASSWORD YOUR-PASSWORD-HERE",
     "MQTT_CLIENTID NULL",
-    "MQTT_SECURITY_PROFILE 0",       // Security profile #0
     "MQTT_KEEPALIVE NULL",
     "MQTT_TIMEOUT NULL",
+    "MQTT_SECURITY TRUE",
+    
+    // Just set TLS security
+    "SECURITY_CERT_VALID_LEVEL 0",
+    "SECURITY_TLS_VERSION 3",
+    "SECURITY_CIPHER_SUITE 0",
+    "SECURITY_CLIENT_NAME NULL",
+    "SECURITY_CLIENT_KEY NULL",
+    "SECURITY_SERVER_NAME_IND NULL",
 };
 #endif
 
@@ -118,40 +153,87 @@ const char *mqttCredentials[] = {
     "MQTT_USERNAME NULL",
     "MQTT_PASSWORD NULL",
     "MQTT_CLIENTID NULL",
-    "MQTT_SECURITY_PROFILE NULL",       // no security profile
     "MQTT_KEEPALIVE NULL",
     "MQTT_TIMEOUT NULL",
+    "MQTT_SECURITY FALSE",
+    
+    // no need to set or include these as there is no security
+    "SECURITY_CERT_VALID_LEVEL 0",
+    "SECURITY_TLS_VERSION 3",
+    "SECURITY_CIPHER_SUITE 0",
+    "SECURITY_CLIENT_NAME NULL",
+    "SECURITY_CLIENT_KEY NULL",
+    "SECURITY_SERVER_NAME_IND NULL",
 };
 #endif
 
 // This is the mosquitto test server configuration.
 // Port 1884 uses username/password authentication only
 // "rw" and "readwrite" for the username/password
-#ifdef MQTT_MOSQUITTO_NoTLS_AUTH
+#ifdef MQTT_MOSQUITTO_NoTLS_Auth
 const char *mqttCredentials[] = {
     "MQTT_TYPE MQTT",
     "MQTT_BROKER_NAME test.mosquitto.org:1884",
-    "MQTT_USERNAME \"rw\"",
-    "MQTT_PASSWORD \"readwrite\"",
+    "MQTT_USERNAME rw",
+    "MQTT_PASSWORD readwrite",
     "MQTT_CLIENTID NULL",
-    "MQTT_SECURITY_PROFILE NULL",       // no security profile
     "MQTT_KEEPALIVE NULL",
     "MQTT_TIMEOUT NULL",
+    "MQTT_SECURITY FALSE",
+    
+    // no need to set or include these as there is no security
+    "SECURITY_CERT_VALID_LEVEL 0",
+    "SECURITY_TLS_VERSION 3",
+    "SECURITY_CIPHER_SUITE 0",
+    "SECURITY_CLIENT_NAME NULL",
+    "SECURITY_CLIENT_KEY NULL",
+    "SECURITY_SERVER_NAME_IND NULL",
 };
 #endif
+
+// This is the mosquitto test server configuration.
+// Port 8884 uses client certificate for authentication
+#ifdef MQTT_MOSQUITTO_TLS_Cert
+const char *mqttCredentials[] = {
+    "MQTT_TYPE MQTT",
+    "MQTT_BROKER_NAME test.mosquitto.org:8884",
+    "MQTT_USERNAME NULL",
+    "MQTT_PASSWORD NULL",
+    "MQTT_CLIENTID NULL",
+    "MQTT_KEEPALIVE NULL",
+    "MQTT_TIMEOUT NULL",
+    "MQTT_SECURITY TRUE",
+    
+    // no need to set or include these as there is no security
+    "SECURITY_CERT_VALID_LEVEL 0",
+    "SECURITY_TLS_VERSION 3",
+    "SECURITY_CIPHER_SUITE 0",
+    "SECURITY_CLIENT_NAME YOUR_CLIENT_CERTIFICATE_NAME_HERE",
+    "SECURITY_CLIENT_KEY YOUR_CLIENT_PRIVATE_KEY_HERE",
+    "SECURITY_SERVER_NAME_IND NULL",
+};
+#endif
+
 // This is the mosquitto test server configuration.
 // Port 8885 uses TLS security and username/password authentication
-// Security ProfileID 0 is assumed to be configured already on the SARA-R5 module
-#ifdef MQTT_MOSQUITTO_TLS_AUTH
+#ifdef MQTT_MOSQUITTO_TLS_Auth
 const char *mqttCredentials[] = {
     "MQTT_TYPE MQTT",
     "MQTT_BROKER_NAME test.mosquitto.org:8885",
-    "MQTT_USERNAME \"rw\"",
-    "MQTT_PASSWORD \"readwrite\"",
+    "MQTT_USERNAME rw",
+    "MQTT_PASSWORD readwrite",
     "MQTT_CLIENTID NULL",
-    "MQTT_SECURITY_PROFILE 0",       // Security profile #0
     "MQTT_KEEPALIVE NULL",
     "MQTT_TIMEOUT NULL",
+    "MQTT_SECURITY TRUE",
+    
+    // Just enable TLS
+    "SECURITY_CERT_VALID_LEVEL 0",
+    "SECURITY_TLS_VERSION 3",
+    "SECURITY_CIPHER_SUITE 0",
+    "SECURITY_CLIENT_NAME NULL",
+    "SECURITY_CLIENT_KEY NULL",
+    "SECURITY_SERVER_NAME_IND NULL",
 };
 #endif
 

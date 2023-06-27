@@ -233,8 +233,8 @@ int32_t initCellScanTask(taskConfig_t *config)
     CREATE_TOPIC_NAME;
 
     writeLog("Initializing the %s task...", TASK_NAME);
-    CHECK_SUCCESS(initMutex);
-    CHECK_SUCCESS(initQueue);
+    EXIT_ON_FAILURE(initMutex);
+    EXIT_ON_FAILURE(initQueue);
 
     char tp[MAX_TOPIC_NAME_SIZE];
     snprintf(tp, MAX_TOPIC_NAME_SIZE, "%sControl", TASK_NAME);

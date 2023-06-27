@@ -77,13 +77,14 @@
 // *** Thingstream MQTT Services
 //#define MQTT_THINGSTREAM_ANYWHERE
 //#define MQTT_THINGSTREAM_FLEX
-//#define MQTT_THINGSTREAM_NOW_NoTLS_AUTH
-//#define MQTT_THINGSTREAM_NOW_TLS_AUTH
+//#define MQTT_THINGSTREAM_NOW_NoTLS_Auth
+//#define MQTT_THINGSTREAM_NOW_TLS_Auth
 
 // *** Mosquitto MQTT Test Service
-#define MQTT_MOSQUITTO_NoTLS_NoAuth
+//#define MQTT_MOSQUITTO_NoTLS_NoAuth
 //#define MQTT_MOSQUITTO_NoTLS_Auth
-//#define MQTT_MOSQUITTO_TLS_Auth
+//#define MQTT_MOSQUITTO_TLS_Cert
+#define MQTT_MOSQUITTO_TLS_Auth
 
 /*  ----------------------------------------------------------------
  * RADIO ACCESS TECHNOLOGY SELECTION

@@ -33,13 +33,13 @@
 #define SENSOR_TOPIC "Sensors"
 #define SENSOR_DWELL_SECONDS 30
 
-#define SENSOR_QUEUE_STACK_SIZE QUEUE_STACK_SIZE_DEFAULT
-#define SENSOR_QUEUE_PRIORITY 5
-#define SENSOR_QUEUE_SIZE 1
-
 // not all tasks will have a task loop if it only uses a queue
 #define SENSOR_TASK_STACK_SIZE (2 * 1024)
 #define SENSOR_TASK_PRIORITY 5
+
+#define SENSOR_QUEUE_STACK_SIZE QUEUE_STACK_SIZE_DEFAULT
+#define SENSOR_QUEUE_PRIORITY 5
+#define SENSOR_QUEUE_SIZE 1
 
 #define MQTT_MESSAGE_MAX_SIZE 200
 
@@ -201,8 +201,8 @@ int32_t initSensorTask(taskConfig_t *config)
     CREATE_TOPIC_NAME;
 
     writeLog("Initializing the %s task...", TASK_NAME);
-    CHECK_SUCCESS(initMutex);
-    CHECK_SUCCESS(initQueue);
+    EXIT_ON_FAILURE(initMutex);
+    EXIT_ON_FAILURE(initQueue);
 
     char tp[MAX_TOPIC_NAME_SIZE];
     snprintf(tp, MAX_TOPIC_NAME_SIZE, "%sControl", TASK_NAME);

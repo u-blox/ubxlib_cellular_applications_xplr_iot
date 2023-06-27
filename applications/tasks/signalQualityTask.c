@@ -30,6 +30,7 @@
  * -------------------------------------------------------------- */
 #define SIGNAL_QUALITY_TASK_STACK_SIZE 1024
 #define SIGNAL_QUALITY_TASK_PRIORITY 5
+
 #define SIGNAL_QUALITY_QUEUE_STACK_SIZE QUEUE_STACK_SIZE_DEFAULT
 #define SIGNAL_QUALITY_QUEUE_PRIORITY 5
 #define SIGNAL_QUALITY_QUEUE_SIZE 5
@@ -208,8 +209,8 @@ int32_t initSignalQualityTask(taskConfig_t *config)
     CREATE_TOPIC_NAME;
 
     writeLog("Initializing the %s task...", TASK_NAME);
-    CHECK_SUCCESS(initMutex);
-    CHECK_SUCCESS(initQueue);
+    EXIT_ON_FAILURE(initMutex);
+    EXIT_ON_FAILURE(initQueue);
 
     char tp[MAX_TOPIC_NAME_SIZE];
     snprintf(tp, MAX_TOPIC_NAME_SIZE, "%sControl", TASK_NAME);

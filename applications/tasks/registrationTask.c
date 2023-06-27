@@ -33,6 +33,7 @@
 
 #define REG_TASK_STACK_SIZE 1024
 #define REG_TASK_PRIORITY 5
+
 #define REG_QUEUE_STACK_SIZE QUEUE_STACK_SIZE_DEFAULT
 #define REG_QUEUE_PRIORITY 5
 #define REG_QUEUE_SIZE 5
@@ -142,6 +143,7 @@ static void getNetworkOrNTPTime(void)
             writeWarn("Can't get NTP Time as we are on a restricted APN");
             return;
         } else {
+            printInfo("Requesting time from NTP Server...");
             time = getNTPTime();
         }
     }
@@ -281,8 +283,8 @@ int32_t initNetworkRegistrationTask(taskConfig_t *config)
     int32_t result = U_ERROR_COMMON_SUCCESS;
 
     writeLog("Initializing the %s task...", TASK_NAME);
-    CHECK_SUCCESS(initMutex);
-    CHECK_SUCCESS(initQueue);
+    EXIT_ON_FAILURE(initMutex);
+    EXIT_ON_FAILURE(initQueue);
 
     return result;
 }

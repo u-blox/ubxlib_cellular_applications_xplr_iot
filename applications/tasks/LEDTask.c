@@ -166,8 +166,8 @@ int32_t initLEDTask(taskConfig_t *config)
     int32_t result = U_ERROR_COMMON_SUCCESS;
 
     writeLog("Initializing the %s task...", TASK_NAME);
-    CHECK_SUCCESS(initMutex);
-    CHECK_SUCCESS(initQueue);
+    EXIT_ON_FAILURE(initMutex);
+    EXIT_ON_FAILURE(initQueue);
 
     return result;
 }
