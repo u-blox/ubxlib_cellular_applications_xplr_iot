@@ -788,7 +788,7 @@ cleanup:
 
 /// @brief Initialises the MQTT task
 /// @param config The task configuration structure
-/// @return zero if successfull, a negative number otherwise
+/// @return zero if successful, a negative number otherwise
 int32_t initMQTTTask(taskConfig_t *config)
 {
     EXIT_IF_CONFIG_NULL;
@@ -806,7 +806,7 @@ int32_t initMQTTTask(taskConfig_t *config)
 }
 
 /// @brief Starts the Signal Quality task loop
-/// @return zero if successfull, a negative number otherwise
+/// @return zero if successful, a negative number otherwise
 int32_t startMQTTTaskLoop(commandParamsList_t *params)
 {
     EXIT_IF_CANT_RUN_TASK;

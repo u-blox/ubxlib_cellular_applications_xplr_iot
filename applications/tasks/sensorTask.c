@@ -189,7 +189,7 @@ int32_t queueGetSensors(commandParamsList_t *params)
 
 /// @brief Initialises the Signal Quality task
 /// @param config The task configuration structure
-/// @return zero if successfull, a negative number otherwise
+/// @return zero if successful, a negative number otherwise
 int32_t initSensorTask(taskConfig_t *config)
 {
     EXIT_IF_CONFIG_NULL;
@@ -212,7 +212,7 @@ int32_t initSensorTask(taskConfig_t *config)
 }
 
 /// @brief Starts the Sensor task loop
-/// @return zero if successfull, a negative number otherwise
+/// @return zero if successful, a negative number otherwise
 int32_t startSensorTaskLoop(commandParamsList_t *params)
 {
     EXIT_IF_CANT_RUN_TASK;

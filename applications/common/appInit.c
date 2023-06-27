@@ -422,7 +422,7 @@ bool startupFramework(void)
 {
     int32_t errorCode;
 
-    // initialise our LEDs and start up button commmands
+    // initialise our LEDs and start up button commands
     if (!initXplrDevice())
         return false;
 

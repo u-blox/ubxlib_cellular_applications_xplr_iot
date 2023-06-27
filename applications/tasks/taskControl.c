@@ -32,8 +32,12 @@
 
 static void setRedLED(void *param);
 
-// These task runners define the application.
-// Here we specify what tasks are to run, and what configuration they are to use
+/* ----------------------------------------------------------------
+ * Task Runner Definitions for each appTask. These task runners 
+ * define the application. Here we specify what tasks are to run, 
+ * and what configuration they are to use
+ * -------------------------------------------------------------- */
+
 taskRunner_t taskRunners[] = {
     // Registration - Looks after the cellular registration process
     {initNetworkRegistrationTask, startNetworkRegistrationTaskLoop, stopNetworkRegistrationTaskLoop, true,
@@ -68,6 +72,9 @@ taskRunner_t taskRunners[] = {
             {SENSOR_TASK, "Sensor", 30, false, BLANK_TASK_HANDLES, NULL}}
 };
 
+/* ----------------------------------------------------------------
+ * STATIC FUNCTIONS
+ * -------------------------------------------------------------- */
 static void setRedLED(void *param)
 {
     SET_RED_LED;
@@ -89,30 +96,6 @@ static taskConfig_t *getTaskConfig(taskTypeId_t id)
     if (runner == NULL) return NULL;
 
     return &(runner->config);
-}
-
-/// @brief Checks the "isTaskRunningxxxx()" functions and returns when the tasks have all stopped.
-void waitForAllTasksToStop()
-{
-    bool stillWaiting;
-
-    writeLog("Waiting for app tasks to stop... This can take sometime if waiting for AT commands to timeout...");
-    do
-    {
-        stillWaiting = false;
-
-        for(int i=0; i<NUM_ELEMENTS(taskRunners); i++) {
-            taskRunner_t *taskRunner = &taskRunners[i];
-            if (!taskRunner->explicit_stop && isMutexLocked(taskRunner->config.handles.mutexHandle)) {
-                printDebug("...still waiting for %s task to finish", taskRunner->config.name);
-                stillWaiting = true;
-            }
-        }
-
-        uPortTaskBlock(100);
-    } while (stillWaiting);
-
-    writeLog("All tasks have now finished...");
 }
 
 /// @brief Blocking function while waiting for the task to finish
@@ -149,6 +132,34 @@ static bool stopTask(taskTypeId_t id)
     }
 
     return true;
+}
+
+/* ----------------------------------------------------------------
+ * PUBLIC FUNCTIONS
+ * -------------------------------------------------------------- */
+
+/// @brief Checks the "isTaskRunningxxxx()" functions and returns when the tasks have all stopped.
+void waitForAllTasksToStop()
+{
+    bool stillWaiting;
+
+    writeLog("Waiting for app tasks to stop... This can take sometime if waiting for AT commands to timeout...");
+    do
+    {
+        stillWaiting = false;
+
+        for(int i=0; i<NUM_ELEMENTS(taskRunners); i++) {
+            taskRunner_t *taskRunner = &taskRunners[i];
+            if (!taskRunner->explicit_stop && isMutexLocked(taskRunner->config.handles.mutexHandle)) {
+                printDebug("...still waiting for %s task to finish", taskRunner->config.name);
+                stillWaiting = true;
+            }
+        }
+
+        uPortTaskBlock(100);
+    } while (stillWaiting);
+
+    writeLog("All tasks have now finished...");
 }
 
 void stopAndWait(taskTypeId_t id)

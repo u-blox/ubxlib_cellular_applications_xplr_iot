@@ -204,7 +204,7 @@ static int32_t initQueue()
  * -------------------------------------------------------------- */
 /// @brief Places a Start Network Scan message on the queue
 /// @param params The parameters for this command
-/// @return zero if successfull, a negative value otherwise
+/// @return zero if successful, a negative value otherwise
 int32_t queueNetworkScan(commandParamsList_t *params)
 {
     cellScanMsg_t qMsg;
@@ -221,7 +221,7 @@ int32_t queueNetworkScan(commandParamsList_t *params)
 
 /// @brief Initialises the network scanning task(s)
 /// @param config The task configuration structure
-/// @return zero if successfull, a negative number otherwise
+/// @return zero if successful, a negative number otherwise
 int32_t initCellScanTask(taskConfig_t *config)
 {
     EXIT_IF_CONFIG_NULL;
@@ -244,7 +244,7 @@ int32_t initCellScanTask(taskConfig_t *config)
 }
 
 /// @brief Starts the Signal Quality task loop
-/// @return zero if successfull, a negative number otherwise
+/// @return zero if successful, a negative number otherwise
 int32_t startCellScanTaskLoop(commandParamsList_t *params)
 {
     return U_ERROR_COMMON_NOT_IMPLEMENTED;

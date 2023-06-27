@@ -278,7 +278,7 @@ int32_t queueLocationNow(commandParamsList_t *params)
 
 /// @brief Initialises the Signal Quality task
 /// @param config The task configuration structure
-/// @return zero if successfull, a negative number otherwise
+/// @return zero if successful, a negative number otherwise
 int32_t initLocationTask(taskConfig_t *config)
 {
     EXIT_IF_CONFIG_NULL;
@@ -307,7 +307,7 @@ int32_t initLocationTask(taskConfig_t *config)
 }
 
 /// @brief Starts the Signal Quality task loop
-/// @return zero if successfull, a negative number otherwise
+/// @return zero if successful, a negative number otherwise
 int32_t startLocationTaskLoop(commandParamsList_t *params)
 {
     EXIT_IF_CANT_RUN_TASK;
