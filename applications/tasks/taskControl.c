@@ -96,7 +96,7 @@ void waitForAllTasksToStop()
 {
     bool stillWaiting;
 
-    writeLog("Waiting for app tasks to stop...");
+    writeLog("Waiting for app tasks to stop... This can take sometime if waiting for AT commands to timeout...");
     do
     {
         stillWaiting = false;
