@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "name": "Applications",
+            "includePath": [
+                "${default}",
+                "${workspaceFolder}/applications/tasks",
+                "${workspaceFolder}/applications/common",
+                "${workspaceFolder}/ubxlib/**",
+                "${workspaceFolder}/../env/ncs/zephyr/**"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "compilerPath": "${workspaceFolder}/../env/gcc-arm-none-eabi-10-2020-q4-major/bin/arm-none-eabi-gcc.exe",
+            "cStandard": "c17",
+            "cppStandard": "c++14",
+            "intelliSenseMode": "windows-gcc-arm"
+        }
+    ],
+    "version": 4
+}
