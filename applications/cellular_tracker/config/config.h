@@ -49,7 +49,7 @@
  *                       "SET_LOG_LEVEL" command via the
  *                        APP_CONTROL MQTT topic
  * -------------------------------------------------------------- */
-#define LOGGING_LEVEL eDEBUG            // taken from logLevels_t
+#define LOGGING_LEVEL eINFO            // taken from logLevels_t
 
 /* ----------------------------------------------------------------
  * APN SELECTION
