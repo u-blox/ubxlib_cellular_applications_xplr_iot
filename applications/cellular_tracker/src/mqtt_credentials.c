@@ -43,7 +43,7 @@
 
 // This is the configuration for loading the MQTT configuration that is already on saved on the file system
 #ifdef MQTT_FILE_SYSTEM
-const char *mqtt_credentials[] = NULL       // NULL will cause the application to only load from file system
+const char *mqttCredentials[] = {};       // NULL will cause the application to only load from file system
 #endif
 
 // This is the Thingstream MQTT-Anywhere configuration.

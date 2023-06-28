@@ -42,7 +42,7 @@
  * Application Version number - this includes the common/tasks too
  * -------------------------------------------------------------- */
 #define APP_NAME    "Cellular Tracker"
-#define APP_VERSION "v0.91"
+#define APP_VERSION "v0.92"
 
 /* ----------------------------------------------------------------
  * DEBUG LEVEL SETTING - This can be changed remotely using
@@ -71,11 +71,16 @@
  *
  * Please select, using ONE #define below, which mqtt configuration
  * to use for this application.
+ * Use 'MQTT_FILE_SYSTEM' to load the config stored on the 
+ * file system, saved earlier.
  *
  * Each are described in the src/mqtt_credentials.c file
  * ----------------------------------------------------------------*/
+// *** Load credentials from file system ONLY ***
+#define MQTT_FILE_SYSTEM
+
 // *** Thingstream MQTT Services - remember to set TSUDP as the APN for MQTT-ANYWHERE
-#define MQTT_THINGSTREAM_ANYWHERE
+//#define MQTT_THINGSTREAM_ANYWHERE
 //#define MQTT_THINGSTREAM_FLEX
 //#define MQTT_THINGSTREAM_NOW_NoTLS_Auth
 //#define MQTT_THINGSTREAM_NOW_TLS_Auth

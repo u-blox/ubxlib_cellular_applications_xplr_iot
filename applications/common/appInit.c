@@ -305,7 +305,7 @@ static bool initXplrDevice(void)
 static bool loadConfigFiles(void)
 {
     // Save the mqtt credentials file (if present)
-    if (mqttCredentials != NULL) {
+    if (mqttCredentialsSize > 0) {
         int32_t saveResult = saveConfigFile(MQTT_CREDENTIALS_FILENAME,
                                             mqttCredentials,
                                             mqttCredentialsSize);

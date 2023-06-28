@@ -1,8 +1,11 @@
-# Test results for V0.9 - PASS
+# Test results for V0.92 - PASS
 MQTT examples all working. Only testing certificate and online test services.
 Test run with DEBUG enabled to display the MQTT and Security Settings.
 
 # MQTT examples
+## MQTT_FILE_SYSTEM
+Output log shows the config file being loaded only, and it has the correct details.
+
 ## MQTT-Anywhere (No security)
 Uses "TSUDP" for the APN : [AT Log](MQTT_THINGSTREAM_ANYWHERE.txt)
 
