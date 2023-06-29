@@ -6,6 +6,8 @@ All MQTT examples should be tested, apart from private mqtt connections which re
 
 Testing should involve MQTT brokers and MQTT-SN gateways, Thingstream Services and Mosquitto test server.
 
+Remember to also check the `MQTT_FILE_SYSTEM` option, where it loads a previously saved configuration from the file system.
+
 # Cell Scanning
 Should show the cell scanning is operational and publishes the results.
 Cell scanning should be able to be cancelled. The LED should turn blue and blip light blue.

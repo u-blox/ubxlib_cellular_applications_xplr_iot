@@ -8,7 +8,11 @@ Once turned ON, by default the application monitors the cellular signal quality.
 If the `Button #1` is pressed the application shuts down and the log file is saved and closed. If you do not press `Button #1` and simply turn off the XPLR-IoT-1 device then the log file will not save the entire log.
 
 ## Building the application
+Recommended minimum nRF SDK version v2.1.0
 Use the do build script with the -e argument: `do -e cellular_tracker build`
+
+You can build from the VSCode IDE too, see this link for further information
+https://github.com/u-blox/ubxlib_examples_xplr_iot#using-the-nrfconnect-visual-studio-code-extension
 
 ## Configuring the application
 Using the [config.h](config/config.h) file in the [config](config/) folder you will find the cellular URAT and APN settings. 
@@ -17,7 +21,17 @@ For the MQTT connection, there is a #define of the MQTT credentials which to use
 
 # Application remote commands
 
-The application can be remotely controlled through various topics which are subscribed to by the application tasks. The listed topics and their commands are here:
+The application can be remotely controlled through various topics which are subscribed to by the application tasks. 
+
+A typical log output shows what the commands are for each task, and main application
+> Subscribed to callback topic: /351457830026040/SensorControl
+>
+> With these commands:
+>
+> 1. MEASURE_NOW
+> 2. START_TASK
+> 3. STOP_TASK
+
 
 ## <IMEI\>AppControl
 
