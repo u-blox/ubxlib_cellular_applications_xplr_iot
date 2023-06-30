@@ -59,8 +59,8 @@ ledAppState_t ledAppStatus[] = {
     {SHUTDOWN, {ledRedOn, ledGreenOn, ledBlueOn}},
     {MQTT_CONNECTED, {ledRedOff, ledGreenOn, ledBlueOff}},
     {MQTT_DISCONNECTED, {ledRedOff, ledGreenFlash, ledBlueOff}},
-    {START_SIGNAL_QUALITY, {ledRedOff, ledGreenOn, ledBlueBlink}},
-    {LOCATION_MEAS, {ledRedBlink, ledGreenOn, ledBlueBlink}},
+    {START_SIGNAL_QUALITY, {ledRedOff, ledGreenOff, ledBlueOn}},
+    {LOCATION_MEAS, {ledRedOn, ledGreenOn, ledBlueOn}},
 };
 
 /* ----------------------------------------------------------------
