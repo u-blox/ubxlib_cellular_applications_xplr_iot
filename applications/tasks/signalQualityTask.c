@@ -53,8 +53,7 @@ static taskConfig_t *taskConfig = NULL;
 /* ----------------------------------------------------------------
  * STATIC VARIABLES
  * -------------------------------------------------------------- */
-static applicationStates_t tempAppStatus;
-
+ static applicationStates_t tempAppStatus;
 static char topicName[MAX_TOPIC_NAME_SIZE];
 
 /// callback commands for incoming MQTT control messages
@@ -115,7 +114,6 @@ static void measureSignalQuality(void)
         // See marcro "IS_NETWORK_AVAILABLE"
         gIsNetworkSignalValid = (rsrp != 0);
 
-        gAppStatus = SEND_SIGNAL_QUALITY;
         snprintf(jsonBuffer, JSON_STRING_LENGTH, format, timestamp, rsrp, rsrq, rssi, rxqual, cellId, earfcn);
         sendMQTTMessage(topicName, jsonBuffer, U_MQTT_QOS_AT_MOST_ONCE, false);
         writeAlways(jsonBuffer);
@@ -124,6 +122,7 @@ static void measureSignalQuality(void)
     }
 
     REVERT_APP_STATUS();
+
     U_PORT_MUTEX_UNLOCK(TASK_MUTEX);
 }
 

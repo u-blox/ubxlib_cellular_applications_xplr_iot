@@ -117,6 +117,8 @@ static void publishLocation(uLocation_t location)
     int32_t whole;
     int32_t fraction;
 
+    gAppStatus = LOCATION_MEAS;
+
     char timestamp[TIMESTAMP_MAX_LENTH_BYTES];
     getTimeStamp(timestamp);
 

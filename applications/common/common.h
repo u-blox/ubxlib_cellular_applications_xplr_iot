@@ -40,7 +40,7 @@
  * MACORS for common task usage/access
  * -------------------------------------------------------------- */
 #define SET_APP_STATUS(x)           tempAppStatus = gAppStatus; gAppStatus = x
-#define REVERT_APP_STATUS(x)        gAppStatus = tempAppStatus
+#define REVERT_APP_STATUS()        gAppStatus = tempAppStatus
 
 #define IS_NETWORK_AVAILABLE        (gIsNetworkSignalValid && gIsNetworkUp)
 
@@ -79,6 +79,7 @@ typedef enum {
     REGISTRATION_DENIED,
     NO_NETWORKS_AVAILABLE,
     NO_COMPATIBLE_NETWORKS,
+    LOCATION_MEAS,
     MAX_STATUS
 } applicationStates_t;
 

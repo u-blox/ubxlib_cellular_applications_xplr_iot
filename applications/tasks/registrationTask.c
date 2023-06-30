@@ -98,8 +98,6 @@ bool gIsNetworkUp = false;
 /// The unix network time, which is retrieved after first registration
 extern int64_t unixNetworkTime;
 
-//ssextern const char *restrictredAPNs[];
-
 /* ----------------------------------------------------------------
  * STATIC FUNCTIONS
  * -------------------------------------------------------------- */
@@ -173,6 +171,7 @@ static int32_t startNetworkRegistration(void)
     }
 
     gIsNetworkUp = true;
+    gAppStatus = REGISTERED;
     networkUpCounter=1;
 
     writeLog("Connected to Cellular Network");

@@ -110,7 +110,6 @@ static void mqttSendMessage(sendMQTTMsg_t msg)
     int32_t errorCode = 0;
 
     if (pContext != NULL && uMqttClientIsConnected(pContext)) {
-        gAppStatus = MQTT_CONNECTED;
         if (mqttSN) {
             errorCode = uMqttClientSnPublish(pContext, msg.topic.pShortName, msg.pMessage,
                                                     strlen(msg.pMessage),
@@ -122,8 +121,10 @@ static void mqttSendMessage(sendMQTTMsg_t msg)
                                                     msg.QoS,
                                                     msg.retain);
         }
+        gAppStatus = MQTT_CONNECTED;
     } else {
         errorCode = U_ERROR_COMMON_NOT_INITIALISED;
+        gAppStatus = MQTT_CONNECTING;
     }
 
     uPortFree(msg.pMessage);
