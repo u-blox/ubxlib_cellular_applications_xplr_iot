@@ -122,7 +122,7 @@ static void networkStatusCallback(uDeviceHandle_t devHandle,
 static bool usingRestrictedAPN(void)
 {
     for(int i=0; i<NUM_ELEMENTS(restrictredAPNs); i++) {
-        if (strcmp(restrictredAPNs[i], APN) == 0)
+        if (strncmp(APN, restrictredAPNs[i], strlen(APN)) == 0)
             return true;
     }
 

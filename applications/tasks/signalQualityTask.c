@@ -95,6 +95,8 @@ static void measureSignalQuality(void)
         int32_t rsrq = uCellInfoGetRsrqDb(gDeviceHandle);
         int32_t rssi = uCellInfoGetRssiDbm(gDeviceHandle);
         int32_t rxqual = uCellInfoGetRxQual(gDeviceHandle);
+        int32_t snr;
+        uCellInfoGetSnrDb(gDeviceHandle, &snr);
         int32_t cellId = uCellInfoGetCellId(gDeviceHandle);
         int32_t earfcn = uCellInfoGetEarfcn(gDeviceHandle);
 
@@ -104,6 +106,7 @@ static void measureSignalQuality(void)
                 "\"RSRP\":\"%d\", "     \
                 "\"RSRQ\":\"%d\", "     \
                 "\"RSSI\":\"%d\", "     \
+                "\"SNR\":\"%d\", "     \
                 "\"RxQual\":\"%d\", "   \
                 "\"CellID\":\"%d\", "   \
                 "\"EARFCN\":\"%d\"}"    \
@@ -114,7 +117,7 @@ static void measureSignalQuality(void)
         // See marcro "IS_NETWORK_AVAILABLE"
         gIsNetworkSignalValid = (rsrp != 0);
 
-        snprintf(jsonBuffer, JSON_STRING_LENGTH, format, timestamp, rsrp, rsrq, rssi, rxqual, cellId, earfcn);
+        snprintf(jsonBuffer, JSON_STRING_LENGTH, format, timestamp, rsrp, rsrq, rssi, snr, rxqual, cellId, earfcn);
         sendMQTTMessage(topicName, jsonBuffer, U_MQTT_QOS_AT_MOST_ONCE, false);
         writeAlways(jsonBuffer);
     } else {

@@ -455,7 +455,7 @@ void finalize(applicationStates_t appState)
     uPortDeinit();
 
     SET_NO_LEDS;
-    printLog("\n\n\nXPLR App has finished. Press button #1 to display log...");
+    printf("\n\n\nXPLR App has finished. Press button #1 to display log...");
 
     displayLogLoop();
 }
