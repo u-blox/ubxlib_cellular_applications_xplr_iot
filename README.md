@@ -4,6 +4,9 @@ The purpose of this repository is to provide example applications which run on t
 
 The [ubxlib-examples-xplr-iot](https://github.com/u-blox/ubxlib_examples_xplr_iot) project contains small examples for individual features of the ubxlib API, whereas this `cellular applications` project is for complete applications based on the ubxlib API.
 
+# XPLR-IoT-1 Application Development Platform
+PLEASE NOTE: The XPLR-IoT-1 device comes with the [XPLR-IoT-1-Sofware](https://github.com/u-blox/xplr-iot-1-software) firmware. To use this application you MUST set the SARA-R510S module's +USIO setting to '2'. This is explained in step 27, section 5.3 of the [XPLR-IoT-1 User guide](https://github.com/u-blox/xplr-iot-1-software). If you do not do this the application will not be able to communicate to the SARA-R510S module and the LED will continuously flash red.
+
 # Applications
 
 (Currently this repository has only one application).

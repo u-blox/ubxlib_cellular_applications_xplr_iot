@@ -59,6 +59,9 @@ static int32_t appDwellTimeMS = 5000;
 // This flag will pause the main application loop
 static bool pauseMainLoopIndicator = false;
 
+static bool appFinalized = false;
+
+
 /* ----------------------------------------------------------------
  * STATIC FUNCTIONS
  * -------------------------------------------------------------- */
@@ -77,7 +80,6 @@ uDeviceHandle_t gDeviceHandle;
 // This flag is set to true when the application should close tasks and log files.
 // This flag is set to true when Button #1 is pressed.
 bool gExitApp = false;
-bool gExitFast = false; // don't wait for closing app Tasks, just close the log file and exit.
 
 void (*buttonTwoFunc)(void) = NULL;
 
@@ -126,25 +128,33 @@ static buttonNumber_t checkStartButton(void)
     return heldButton;
 }
 
-/// @brief Handler for the buttons. On boot, Button 1: Display log, 2: Delete log.
+/// @brief Handler for the buttons. 
 static void button_pressed(int buttonNo, uint32_t holdTime)
 {
-    if (gExitApp)
+    // While exiting don't allow any buttons to be handled
+    // Allow them to be handled once the application has finalized
+    if (gExitApp && appFinalized == false) 
         return;
-
+    
+    // If the button is released, store the 'pressed' button
     if (!holdTime) {
         pressedButton = buttonNo;
     } else {
-        pressedButton = NO_BUTTON;
+        pressedButton = NO_BUTTON; 
+    
+        // The application framework will enable the 'app' buttons,
+        // exit handling the buttons if this is not enabled yet.
         if (!buttonCommandEnabled)
             return;
 
         switch (buttonNo) {
+            // EXIT APPLICATION 
             case BUTTON_1:
                 writeLog("Exit button pressed, closing down... Please wait for the RED LED to go out...");
                 gExitApp = true;
                 break;
 
+            // BUTTON #2 action is set by the application via setButtonTwoFunction()
             case BUTTON_2:                
                 if (buttonTwoFunc != NULL) {
                     writeLog("Button #2 pressed");
@@ -156,7 +166,39 @@ static void button_pressed(int buttonNo, uint32_t holdTime)
 
             default:
                 break;
-            }
+        }
+    }
+}
+
+static void displayLog(bool printHelp)
+{
+    startLogging(LOG_FILENAME);
+    displayLogFile();
+    closeLogFile(false);
+
+    if (printHelp) {
+        printf("\n\n\nYou can press Button #1 to display the log now still...");
+    }
+}
+
+/// @brief Used at the end of the application to allow the displaying
+/// of the log contents. This loop never exits - only use at end of app!
+static void displayLogLoop(void)
+{
+    // make sure the button handler doesn't treat the button
+    // presses as application presses.
+    appFinalized = true;
+    buttonCommandEnabled = false;
+
+    // loop here, just in case Button #1 is pressed for
+    // displaying the log after the device has been plugged
+    // in to a computer.
+    while(true) {
+        uPortTaskBlock(50);
+
+        if (pressedButton == BUTTON_1) {
+            displayLog(true);
+        }
     }
 }
 
@@ -237,22 +279,22 @@ static bool initXplrDevice(void)
     // User has chance to hold down a button to delete or display the log
     buttonNumber_t button = checkStartButton();
 
+    SET_NO_LEDS;
+
     // deleting the log file is performed now before the start of the application
     if (button == BUTTON_2) {
         printLog("Deleting log file...");
         deleteFile(LOG_FILENAME);
     }
 
-    setLogLevel(LOGGING_LEVEL);
-    startLogging(LOG_FILENAME);
-
     // displaying the log file ends the application
     if (button == BUTTON_1) {
-        displayLogFile();
-        SET_NO_LEDS;
-        printLog("Application finished");
-        return false;
+        displayLog(true);
+        displayLogLoop();
     }
+
+    setLogLevel(LOGGING_LEVEL);
+    startLogging(LOG_FILENAME);
 
     // Display the file system free size
     displayFileSpace(LOG_FILENAME);
@@ -263,7 +305,7 @@ static bool initXplrDevice(void)
 static bool loadConfigFiles(void)
 {
     // Save the mqtt credentials file (if present)
-    if (mqttCredentials != NULL) {
+    if (mqttCredentialsSize > 0) {
         int32_t saveResult = saveConfigFile(MQTT_CREDENTIALS_FILENAME,
                                             mqttCredentials,
                                             mqttCredentialsSize);
@@ -396,7 +438,7 @@ void runApplicationLoop(bool (*appFunc)(void))
 
 /// @brief Sets the application status, waits for the tasks and closes the log
 /// @param appState The application status to set for the shutdown
-void finalise(applicationStates_t appState)
+void finalize(applicationStates_t appState)
 {
     gAppStatus = appState;
     gExitApp = true;
@@ -407,13 +449,15 @@ void finalise(applicationStates_t appState)
     SET_BLUE_LED;
     stopAndWait(NETWORK_REG_TASK);
 
-    closeLog();
+    writeLog("Application Finished.");
+
+    closeLogFile(true);
     uPortDeinit();
 
     SET_NO_LEDS;
-    printLog("XPLR App has finished.");
+    printf("\n\n\nXPLR App has finished. Press button #1 to display log...");
 
-    while(true);
+    displayLogLoop();
 }
 
 /// @brief Starts the application framework
@@ -422,7 +466,7 @@ bool startupFramework(void)
 {
     int32_t errorCode;
 
-    // initialise our LEDs and start up button commmands
+    // initialise our LEDs and start up button commands
     if (!initXplrDevice())
         return false;
 
@@ -434,13 +478,13 @@ bool startupFramework(void)
     errorCode = initSingleTask(LED_TASK);
     if (errorCode < 0) {
         writeFatal("* Failed to initialise LED task - not running application!");
-        finalise(ERROR);
+        finalize(ERROR);
     }
 
     errorCode = runTask(LED_TASK);
     if (errorCode != 0) {
         writeFatal("* Failed to start LED task - not running application!");
-        finalise(ERROR);
+        finalize(ERROR);
     }
 
     // initialise the cellular module
@@ -448,12 +492,12 @@ bool startupFramework(void)
     errorCode = initCellularDevice();
     if (errorCode != 0) {
         writeFatal("* Failed to initialise the cellular module - not running application!");
-        finalise(ERROR);
+        finalize(ERROR);
     }
 
     // Initialise the task runners
     if (initTasks() != 0) {
-        finalise(ERROR);
+        finalize(ERROR);
     }
 
     return true;

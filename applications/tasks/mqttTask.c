@@ -107,10 +107,11 @@ static void mqttSendMessage(sendMQTTMsg_t msg)
 {
     if (!isNotExiting()) return;
 
-    int32_t errorCode = 0;
+    int32_t errorCode = U_ERROR_COMMON_NOT_INITIALISED;
 
-    if (pContext != NULL && uMqttClientIsConnected(pContext)) {
-        gAppStatus = MQTT_CONNECTED;
+    bool mqttConnected = uMqttClientIsConnected(pContext);
+
+    if (pContext != NULL && mqttConnected && gIsNetworkUp && gIsNetworkSignalValid) {
         if (mqttSN) {
             errorCode = uMqttClientSnPublish(pContext, msg.topic.pShortName, msg.pMessage,
                                                     strlen(msg.pMessage),
@@ -122,9 +123,11 @@ static void mqttSendMessage(sendMQTTMsg_t msg)
                                                     msg.QoS,
                                                     msg.retain);
         }
-    } else {
-        errorCode = U_ERROR_COMMON_NOT_INITIALISED;
+        gAppStatus = MQTT_CONNECTED;
     }
+
+    if (!mqttConnected)
+        gAppStatus = MQTT_DISCONNECTED;
 
     uPortFree(msg.pMessage);
     if (mqttSN)
@@ -135,10 +138,12 @@ static void mqttSendMessage(sendMQTTMsg_t msg)
     if (errorCode == 0)
         writeDebug("Published MQTT message");
     else {
-        if (errorCode == U_ERROR_COMMON_NOT_INITIALISED)
-            writeDebug("MQTT Client is not online, not publishing message");
-        else
-            writeWarn("Failed to publish MQTT message: %d", errorCode);
+        if (errorCode == U_ERROR_COMMON_NOT_INITIALISED) {
+            writeDebug("Network or MQTT server not available, not publishing message");
+        } else {
+            int32_t errValue = uMqttClientGetLastErrorCode(pContext);
+            writeWarn("Failed to publish MQTT message, %s error: ", errValue);
+        }
     }
 }
 
@@ -345,9 +350,9 @@ static void callbackTopic(size_t msgSize)
     }
 
     if (errorCode == U_ERROR_COMMON_NOT_FOUND)
-        printWarn("Topic name not found in topic callback register: %s", topicString);
+        printWarn("callbackTopic(): Topic name %s not found", topicString);
     else if (errorCode < 0)
-        printWarn("Topic command callback failed: %d", errorCode);
+        printWarn("callbackTopic(): Topic command callback failed: %d", errorCode);
 }
 
 /// @brief Go through the number of messages we have to read and read them
@@ -380,7 +385,7 @@ static void taskLoop(void *pParameters)
         if (!uMqttClientIsConnected(pContext)) {
             gAppStatus = MQTT_DISCONNECTED;
             if (gIsNetworkUp && gIsNetworkSignalValid) {
-                writeLog("MQTT client disconnected, going to try to connect...");
+                writeLog("MQTT client disconnected, trying to connect...");
                 if (connectBroker() != U_ERROR_COMMON_SUCCESS)
                     uPortTaskBlock(5000);
             } else {
@@ -404,7 +409,7 @@ static void taskLoop(void *pParameters)
     downlinkMessage = NULL;
 
     U_PORT_MUTEX_UNLOCK(TASK_MUTEX);
-    FINALISE_TASK;
+    FINALIZE_TASK;
 }
 
 static int32_t initQueue()
@@ -437,7 +442,7 @@ static int32_t initMutex()
 static int32_t registerTopicCallBack(topicCallback_t *topicCallback)
 {
     if (topicCallbackCount == MAX_TOPIC_CALLBACKS) {
-        writeError("Maximum number of topic callbacks reached.");
+        writeError("registerTopicCallBack(): max callback count");
         return U_ERROR_COMMON_NO_MEMORY;
     }
 
@@ -450,7 +455,7 @@ static int32_t registerTopicCallBack(topicCallback_t *topicCallback)
     if (mqttSN) {
         topicCallback->snShortName = (uMqttSnTopicName_t *)malloc(sizeof(uMqttSnTopicName_t));
         if (topicCallback->snShortName == NULL) {
-            writeError("Failed to allocate memory for the MQTT-SN short topic name");
+            writeError("registerTopicCallBack(): snShortName memory allocation");
             return U_ERROR_COMMON_NO_MEMORY;
         }
 
@@ -463,7 +468,7 @@ static int32_t registerTopicCallBack(topicCallback_t *topicCallback)
     }
 
     if (errorCode < 0) {
-        writeError("Failed to subscribe to topic: %s", topicCallback->topicName);
+        writeError("registerTopicCallBack(): Subscribe to topic %s", topicCallback->topicName);
         return errorCode;
     }
 
@@ -499,13 +504,15 @@ static void subscribeToTopic(void *pParam)
     while(errorCode == U_ERROR_COMMON_NOT_INITIALISED && !gExitApp) {
         errorCode = registerTopicCallBack(topicCallback);
         if(errorCode == U_ERROR_COMMON_NOT_INITIALISED) {
-            printDebug("MQTT not connected yet, waiting another 5 seconds...");
+            printDebug("Still waiting to subscribe to %s topic");
             uPortTaskBlock(5000);
         }
     }
 
-    if (errorCode != 0) {
-        writeError("Subscribing a callback to topic %s failed with erorr code %d", topicCallback->topicName, errorCode);
+    if (errorCode != 0 ) {
+        if (!gExitApp)
+            writeError("Subscribing a callback to topic %s failed with error code %d", topicCallback->topicName, errorCode);
+    
         goto cleanUp;
     }
 
@@ -530,22 +537,23 @@ static int32_t registerSNShortName(const char *topicName, uMqttSnTopicName_t **s
     // allocate the memory for the sn Topic Name structure
     *snShortName = (uMqttSnTopicName_t *)malloc(sizeof(uMqttSnTopicName_t));
     if (*snShortName == NULL) {
-        writeError("Failed to allocate memory for the MQTT-SN short topic name");
-        goto cleanup;
+        writeError("registerSNShortName(): snShortName memory allocation");
+        goto cleanUp;
     }
 
     // register the topic name with the MQTT-SN gateway
     errorCode = uMqttClientSnRegisterNormalTopic(pContext, topicName, *snShortName);
     if (errorCode != 0) {
-        writeError("Failed to register topic name '%s' on the MQTT-SN gateway: %d", topicName, errorCode);
-        goto cleanup;
+        writeError("registerSNShortName(): Register Normal Topic '%s': %d", topicName, errorCode);
+        goto cleanUp;
     }
 
     errorCode = U_ERROR_COMMON_SUCCESS;
 
-cleanup:
+cleanUp:
     if (errorCode != 0) {
         uPortFree(*snShortName);
+        *snShortName = NULL;
     }
 
     return errorCode;
@@ -569,19 +577,19 @@ static int32_t getMqttSNTopicName(const char *topicName, uMqttSnTopicName_t **sn
     int32_t errorCode = U_ERROR_COMMON_NO_MEMORY;
     mqttSNTopicNameNode_t *newNode = (mqttSNTopicNameNode_t *)malloc(sizeof(mqttSNTopicNameNode_t));
     if (newNode == NULL) {
-        writeError("Failed to allocate memory for new MQTT TopicName/ShortName entry");
-        goto cleanup;
+        writeError("getMqttSNTopicName(): newNode memory allocation");
+        goto cleanUp;
     }
 
     newNode->topicName = uStrDup(topicName);
     if (newNode->topicName == NULL) {
-        writeError("Failed to allocate memory for topic name in the TopicName/ShortName entry");
-        goto cleanup;
+        writeError("getMqttSNTopicName(): topicName memory allocation");
+        goto cleanUp;
     }
 
     errorCode = registerSNShortName(topicName, snShortName);
     if (errorCode < 0)
-        goto cleanup;
+        goto cleanUp;
 
     // add it to the linked list
     newNode->snShortName = *snShortName;
@@ -590,7 +598,7 @@ static int32_t getMqttSNTopicName(const char *topicName, uMqttSnTopicName_t **sn
 
     errorCode = U_ERROR_COMMON_SUCCESS;
 
-cleanup:
+cleanUp:
     if (errorCode != 0) {
         uPortFree(newNode->topicName);
         uPortFree(newNode);
@@ -683,7 +691,7 @@ int32_t subscribeToTopicAsync(const char *taskTopicName, uMqttQos_t qos, callbac
     if (topicCallbackInfo == NULL) {
         writeError("Failed to create topicCallback - not enough memory");
         errorCode = U_ERROR_COMMON_NO_MEMORY;
-        goto cleanup;
+        goto cleanUp;
     }
 
     snprintf(tempTopicName, TEMP_TOPIC_NAME_SIZE, "/%s/%s", gSerialNumber, taskTopicName);
@@ -691,7 +699,7 @@ int32_t subscribeToTopicAsync(const char *taskTopicName, uMqttQos_t qos, callbac
     if (topicName == NULL) {
         writeError("Failed to create task topic name - not enough memory");
         errorCode = U_ERROR_COMMON_NO_MEMORY;
-        goto cleanup;
+        goto cleanUp;
     }
 
     topicCallbackInfo->topicName = topicName;
@@ -702,10 +710,10 @@ int32_t subscribeToTopicAsync(const char *taskTopicName, uMqttQos_t qos, callbac
     errorCode = uPortTaskCreate(subscribeToTopic, NULL, 2048, (void *)topicCallbackInfo, 5, &handle);
     if (errorCode != 0) {
         writeError("Can't start topic subscription on %s: %d", taskTopicName, errorCode);
-        goto cleanup;
+        goto cleanUp;
     }
 
-cleanup:
+cleanUp:
     if (errorCode != 0) {
         uPortFree(topicCallbackInfo);
         topicCallbackInfo = NULL;
@@ -727,13 +735,18 @@ int32_t sendMQTTMessage(const char *pTopicName, const char *pMessage, uMqttQos_t
 {
     // if the event queue handle is not valid, don't send the message
     if (TASK_QUEUE < 0) {
-        writeWarn("MQTT Event Queue handle is not valid, not publishing MQTT message");
+        writeWarn("Not publishing MQTT message, MQTT Event Queue handle is not valid");
         return U_ERROR_COMMON_NOT_INITIALISED;
     }
 
     if (!IS_NETWORK_AVAILABLE) {
         writeWarn("Not publishing MQTT message, Network is not available at the moment");
         return U_ERROR_COMMON_TEMPORARY_FAILURE;
+    }
+
+    if (pContext == NULL || !uMqttClientIsConnected(pContext)) {
+        writeWarn("Not publishing MQTT message, not connected to %s", MQTT_TYPE_NAME);
+        return U_ERROR_COMMON_NOT_INITIALISED;
     }
 
     if (!isNotExiting()) return U_ERROR_COMMON_BUSY;
@@ -744,11 +757,14 @@ int32_t sendMQTTMessage(const char *pTopicName, const char *pMessage, uMqttQos_t
     qMsg.msgType = SEND_MQTT_MESSAGE;
 
     bool failed = false;
-    uMqttSnTopicName_t *snShortName;
-
     failed = STRCOPYTO(qMsg.msg.message.pMessage, pMessage);
     if (!failed && mqttSN) {
-        failed = getMqttSNTopicName(pTopicName, &snShortName) != 0;
+        uMqttSnTopicName_t *snShortName;
+        if (getMqttSNTopicName(pTopicName, &snShortName) < 0) {
+            writeError("Not publishing MQTT-SN message, failed to get/register MQTT-SN Topic Name.");
+            goto cleanUp;
+        }
+
         failed = MEMCOPYTO(qMsg.msg.message.topic.pShortName, snShortName, sizeof(uMqttSnTopicName_t));
     } else {
         failed = STRCOPYTO(qMsg.msg.message.topic.pTopicName, pTopicName);
@@ -756,8 +772,8 @@ int32_t sendMQTTMessage(const char *pTopicName, const char *pMessage, uMqttQos_t
 
     if (failed) {
         errorCode = U_ERROR_COMMON_NO_MEMORY;
-        writeLog("Failed to allocate memory for MQTT message.");
-        goto cleanup;
+        writeLog("Not publishing MQTT message, failed to allocate memory for message.");
+        goto cleanUp;
     }
 
     qMsg.msg.message.QoS = QoS;
@@ -765,11 +781,11 @@ int32_t sendMQTTMessage(const char *pTopicName, const char *pMessage, uMqttQos_t
 
     errorCode = uPortEventQueueSendIrq(TASK_QUEUE, &qMsg, sizeof(mqttMsg_t));
     if (errorCode != 0) {
-        writeLog("Failed to send Event Queue Message: %d", errorCode);
-        goto cleanup;
+        writeLog("Not publishing MQTT message, Event Queue Full");
+        goto cleanUp;
     }
 
-cleanup:
+cleanUp:
     if (errorCode != 0) {
         if (mqttSN) {
             uPortFree(qMsg.msg.message.topic.pShortName);
@@ -788,7 +804,7 @@ cleanup:
 
 /// @brief Initialises the MQTT task
 /// @param config The task configuration structure
-/// @return zero if successfull, a negative number otherwise
+/// @return zero if successful, a negative number otherwise
 int32_t initMQTTTask(taskConfig_t *config)
 {
     EXIT_IF_CONFIG_NULL;
@@ -806,7 +822,7 @@ int32_t initMQTTTask(taskConfig_t *config)
 }
 
 /// @brief Starts the Signal Quality task loop
-/// @return zero if successfull, a negative number otherwise
+/// @return zero if successful, a negative number otherwise
 int32_t startMQTTTaskLoop(commandParamsList_t *params)
 {
     EXIT_IF_CANT_RUN_TASK;

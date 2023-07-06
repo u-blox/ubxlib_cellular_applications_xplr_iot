@@ -30,14 +30,18 @@
 /* ----------------------------------------------------------------
  * DEFINES
  * -------------------------------------------------------------- */
-#define LOCATION_TASK_STACK_SIZE (3 * 1024)
-#define LOCATION_TASK_PRIORITY 5
+#define LOCATION_TASK_STACK_SIZE    (3 * 1024)
+#define LOCATION_TASK_PRIORITY      5
 
 #define LOCATION_QUEUE_STACK_SIZE QUEUE_STACK_SIZE_DEFAULT
 #define LOCATION_QUEUE_PRIORITY 5
-#define LOCATION_QUEUE_SIZE 5
+#define LOCATION_QUEUE_SIZE     5
 
-#define JSON_STRING_LENGTH 300
+#define JSON_STRING_LENGTH      300
+
+#define TEN_MILLIONTH           10000000
+
+#define FRACTION_FORMAT(v, d)   fractionConvert(v,&whole, &fraction, d), whole, fraction
 
 /* ----------------------------------------------------------------
  * TYPE DEFINITIONS
@@ -95,9 +99,10 @@ static bool keepGoing(void *pParam)
     return kg;
 }
 
-static char latLongConvert(int32_t x1e7,
+static char fractionConvert(int32_t x1e7,
                           int32_t *pWhole,
-                          int32_t *pFraction)
+                          int32_t *pFraction,
+                          int32_t divider)
 {
     char prefix = '+';
 
@@ -106,8 +111,8 @@ static char latLongConvert(int32_t x1e7,
         x1e7 = -x1e7;
         prefix = '-';
     }
-    *pWhole = x1e7 / 10000000;
-    *pFraction = x1e7 % 10000000;
+    *pWhole = x1e7 / divider;
+    *pFraction = x1e7 % divider;
 
     return prefix;
 }
@@ -117,28 +122,31 @@ static void publishLocation(uLocation_t location)
     int32_t whole;
     int32_t fraction;
 
+    gAppStatus = LOCATION_MEAS;
+
     char timestamp[TIMESTAMP_MAX_LENTH_BYTES];
     getTimeStamp(timestamp);
 
     char format[] = "{"                                         \
             "\"Timestamp\":\"%s\", "                            \
             "\"Location\":{"                                    \
+                "\"Altitude\":\"%d\", "                  \
                 "\"Latitude\":\"%c%d.%07d\", "                  \
                 "\"Longitude\":\"%c%d.%07d\", "                 \
-                "\"Accuracy\":\"%d\", "                         \
+                "\"Accuracy\":\"%d\", "                  \
+                "\"Speed\":\"%d\", "                     \
                 "\"Time\":\"%4d-%02d-%02d %02d:%02d:%02d\"}"    \
         "}";
 
     struct tm *t = gmtime(&location.timeUtc);
 
     snprintf(jsonBuffer, JSON_STRING_LENGTH, format, timestamp,
-                        latLongConvert(location.latitudeX1e7, &whole, &fraction),
-                        whole, fraction,
-                        latLongConvert(location.longitudeX1e7, &whole, &fraction),
-                        whole, fraction,
-                        location.radiusMillimetres/1000,
-                        t->tm_year + 1900, t->tm_mon, t->tm_mday,
-                        t->tm_hour, t->tm_min, t->tm_sec);
+            location.altitudeMillimetres,
+            FRACTION_FORMAT(location.latitudeX1e7,  TEN_MILLIONTH),
+            FRACTION_FORMAT(location.longitudeX1e7, TEN_MILLIONTH),
+            location.radiusMillimetres,
+            location.speedMillimetresPerSecond,
+            t->tm_year + 1900, t->tm_mon, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec);
 
     sendMQTTMessage(topicName, jsonBuffer, U_MQTT_QOS_AT_MOST_ONCE, false);
     writeAlways(jsonBuffer);
@@ -153,9 +161,7 @@ static void getLocation(void *pParams)
 
     U_PORT_MUTEX_LOCK(TASK_MUTEX);
 
-    uLocation_t location;
-
-    // SET_APP_STATUS(START_LOCATION);
+    uLocation_t location;   
     gettingLocation = true;
 
     printDebug("Requesting location information...");
@@ -215,7 +221,7 @@ static void taskLoop(void *pParameters)
         dwellTask(taskConfig, isNotExiting);
     }
 
-    FINALISE_TASK;
+    FINALIZE_TASK;
 }
 
 static int32_t initQueue()
@@ -278,7 +284,7 @@ int32_t queueLocationNow(commandParamsList_t *params)
 
 /// @brief Initialises the Signal Quality task
 /// @param config The task configuration structure
-/// @return zero if successfull, a negative number otherwise
+/// @return zero if successful, a negative number otherwise
 int32_t initLocationTask(taskConfig_t *config)
 {
     EXIT_IF_CONFIG_NULL;
@@ -307,7 +313,7 @@ int32_t initLocationTask(taskConfig_t *config)
 }
 
 /// @brief Starts the Signal Quality task loop
-/// @return zero if successfull, a negative number otherwise
+/// @return zero if successful, a negative number otherwise
 int32_t startLocationTaskLoop(commandParamsList_t *params)
 {
     EXIT_IF_CANT_RUN_TASK;

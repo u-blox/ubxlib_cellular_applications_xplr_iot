@@ -44,6 +44,9 @@
 // This flag represents the module can hear the network signaling
 bool gIsNetworkSignalValid = false;
 
+extern char pOperatorName[OPERATOR_NAME_SIZE];
+extern int32_t operatorMcc, operatorMnc;
+
 /* ----------------------------------------------------------------
  * TASK COMMON VARIABLES
  * -------------------------------------------------------------- */
@@ -53,8 +56,7 @@ static taskConfig_t *taskConfig = NULL;
 /* ----------------------------------------------------------------
  * STATIC VARIABLES
  * -------------------------------------------------------------- */
-static applicationStates_t tempAppStatus;
-
+ static applicationStates_t tempAppStatus;
 static char topicName[MAX_TOPIC_NAME_SIZE];
 
 /// callback commands for incoming MQTT control messages
@@ -96,18 +98,23 @@ static void measureSignalQuality(void)
         int32_t rsrq = uCellInfoGetRsrqDb(gDeviceHandle);
         int32_t rssi = uCellInfoGetRssiDbm(gDeviceHandle);
         int32_t rxqual = uCellInfoGetRxQual(gDeviceHandle);
+        int32_t snr;
+        uCellInfoGetSnrDb(gDeviceHandle, &snr);
         int32_t cellId = uCellInfoGetCellId(gDeviceHandle);
         int32_t earfcn = uCellInfoGetEarfcn(gDeviceHandle);
 
         char format[] = "{" \
-            "\"Timestamp\":\"%s\", "    \
-            "\"CellQuality\":{"         \
-                "\"RSRP\":\"%d\", "     \
-                "\"RSRQ\":\"%d\", "     \
-                "\"RSSI\":\"%d\", "     \
-                "\"RxQual\":\"%d\", "   \
-                "\"CellID\":\"%d\", "   \
-                "\"EARFCN\":\"%d\"}"    \
+            "\"Timestamp\":\"%s\", "        \
+            "\"CellQuality\":{"             \
+                "\"RSRP\":\"%d\", "         \
+                "\"RSRQ\":\"%d\", "         \
+                "\"RSSI\":\"%d\", "         \
+                "\"SNR\":\"%d\", "          \
+                "\"RxQual\":\"%d\", "       \   
+                "\"CellID\":\"%d\", "       \
+                "\"EARFCN\":\"%d\", "       \
+                "\"PLMN\":\"%03d%02d\", "   \                
+                "\"Operator\":\"%s\"}"      \
         "}";
 
         // Checking if RSRP is not zero is a great way to
@@ -115,8 +122,9 @@ static void measureSignalQuality(void)
         // See marcro "IS_NETWORK_AVAILABLE"
         gIsNetworkSignalValid = (rsrp != 0);
 
-        gAppStatus = SEND_SIGNAL_QUALITY;
-        snprintf(jsonBuffer, JSON_STRING_LENGTH, format, timestamp, rsrp, rsrq, rssi, rxqual, cellId, earfcn);
+        snprintf(jsonBuffer, JSON_STRING_LENGTH, format, timestamp, 
+                                rsrp, rsrq, rssi, snr, rxqual, 
+                                cellId, earfcn, operatorMcc, operatorMnc, pOperatorName);
         sendMQTTMessage(topicName, jsonBuffer, U_MQTT_QOS_AT_MOST_ONCE, false);
         writeAlways(jsonBuffer);
     } else {
@@ -124,6 +132,7 @@ static void measureSignalQuality(void)
     }
 
     REVERT_APP_STATUS();
+
     U_PORT_MUTEX_UNLOCK(TASK_MUTEX);
 }
 
@@ -155,7 +164,7 @@ static void taskLoop(void *pParameters)
         dwellTask(taskConfig, isNotExiting);
     }
 
-    FINALISE_TASK;
+    FINALIZE_TASK;
 }
 
 static int32_t initQueue()
@@ -197,7 +206,7 @@ int32_t queueMeasureNow(commandParamsList_t *params)
 
 /// @brief Initialises the Signal Quality task
 /// @param config The task configuration structure
-/// @return zero if successfull, a negative number otherwise
+/// @return zero if successful, a negative number otherwise
 int32_t initSignalQualityTask(taskConfig_t *config)
 {
     EXIT_IF_CONFIG_NULL;
@@ -220,7 +229,7 @@ int32_t initSignalQualityTask(taskConfig_t *config)
 }
 
 /// @brief Starts the Signal Quality task loop
-/// @return zero if successfull, a negative number otherwise
+/// @return zero if successful, a negative number otherwise
 int32_t startSignalQualityTaskLoop(commandParamsList_t *params)
 {
     EXIT_IF_CANT_RUN_TASK;

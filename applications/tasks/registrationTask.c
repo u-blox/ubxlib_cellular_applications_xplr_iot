@@ -44,23 +44,10 @@
 static bool exitTask = false;
 static taskConfig_t *taskConfig = NULL;
 
-/// @brief check if the application is exiting, or task stopping
-static bool isNotExiting(void)
-{
-    return !gExitApp && !exitTask;
-}
-
-// This is here as it needs to be defined before the network cfg cell just below
-static bool keepGoing(void *pParam)
-{
-    bool kg = isNotExiting();
-    if (kg)
-        printDebug("Still trying to register on a network...");
-    else
-        printDebug("Network registration cancelled");
-
-    return kg;
-}
+/* ----------------------------------------------------------------
+ * FUNCTION DECLARATIONS
+ * -------------------------------------------------------------- */
+static bool keepGoing(void *pParam);
 
 /* ----------------------------------------------------------------
  * STATIC VARIABLES
@@ -98,11 +85,47 @@ bool gIsNetworkUp = false;
 /// The unix network time, which is retrieved after first registration
 extern int64_t unixNetworkTime;
 
-//ssextern const char *restrictredAPNs[];
+char pOperatorName[OPERATOR_NAME_SIZE] = "Unknown";
+int32_t operatorMcc = 0;
+int32_t operatorMnc = 0;
 
 /* ----------------------------------------------------------------
  * STATIC FUNCTIONS
  * -------------------------------------------------------------- */
+
+/// @brief check if the application is exiting, or task stopping
+static bool isNotExiting(void)
+{
+    return !gExitApp && !exitTask;
+}
+
+// This is here as it needs to be defined before the network cfg cell just below
+static bool keepGoing(void *pParam)
+{
+    bool kg = isNotExiting();
+    if (kg)
+        printDebug("Still trying to register on a network...");
+    else
+        printDebug("Network registration cancelled");
+
+    return kg;
+}
+
+static int32_t getNetworkInfo()
+{
+    // request the PLMN / network operator information
+    int32_t errorCode = uCellNetGetOperatorStr(gDeviceHandle, pOperatorName, OPERATOR_NAME_SIZE);
+    if (errorCode < 0) {
+        writeWarn("Failed to get operator name: %d", errorCode);
+    } else {
+        errorCode = uCellNetGetMccMnc(gDeviceHandle, &operatorMcc, &operatorMnc);
+        if (errorCode < 0) {
+            writeWarn("Failed to get MCC/MNC: %d", errorCode);
+        }
+    }
+
+    return errorCode;
+}
 
 static void networkStatusCallback(uDeviceHandle_t devHandle,
                              uNetworkType_t netType,
@@ -111,20 +134,25 @@ static void networkStatusCallback(uDeviceHandle_t devHandle,
                              void *pParameter)
 {
     // count the number of times the network 'goes up'
-    if (!gIsNetworkUp && isUp)
+    if (!gIsNetworkUp && isUp) {
         networkUpCounter++;
+
+        getNetworkInfo();
+    }
 
     writeLog("Network Status: %s", isUp ? "Registered" : "Unknown");
     gIsNetworkUp = isUp;
 
-    if (!isUp)
+    if (!isUp) {
         gAppStatus = REGISTRATION_UNKNOWN;
+        strncpy(pOperatorName, "Unknown", OPERATOR_NAME_SIZE);
+    }
 }
 
 static bool usingRestrictedAPN(void)
 {
     for(int i=0; i<NUM_ELEMENTS(restrictredAPNs); i++) {
-        if (strcmp(restrictredAPNs[i], APN) == 0)
+        if (strncmp(APN, restrictredAPNs[i], strlen(APN)) == 0)
             return true;
     }
 
@@ -173,9 +201,11 @@ static int32_t startNetworkRegistration(void)
     }
 
     gIsNetworkUp = true;
+    gAppStatus = REGISTERED;
     networkUpCounter=1;
 
-    writeLog("Connected to Cellular Network");
+    getNetworkInfo();
+    writeLog("Connected to Cellular Network: %s (%03d%02d)", pOperatorName, operatorMcc, operatorMnc);
     return 0;
 }
 
@@ -240,7 +270,7 @@ static void taskLoop(void *pParameters)
     deRegisterFromNetwork();
 
     U_PORT_MUTEX_UNLOCK(TASK_MUTEX);
-    FINALISE_TASK;
+    FINALIZE_TASK;
 }
 
 static int32_t initQueue()
@@ -273,7 +303,7 @@ static int32_t initMutex()
 
 /// @brief Initialises the registration task
 /// @param config The task configuration structure
-/// @return zero if successfull, a negative number otherwise
+/// @return zero if successful, a negative number otherwise
 int32_t initNetworkRegistrationTask(taskConfig_t *config)
 {
     EXIT_IF_CONFIG_NULL;
@@ -290,7 +320,7 @@ int32_t initNetworkRegistrationTask(taskConfig_t *config)
 }
 
 /// @brief Starts the Signal Quality task loop
-/// @return zero if successfull, a negative number otherwise
+/// @return zero if successful, a negative number otherwise
 int32_t startNetworkRegistrationTaskLoop(commandParamsList_t *params)
 {
     EXIT_IF_CANT_RUN_TASK;

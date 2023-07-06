@@ -28,6 +28,6 @@ void runApplicationLoop(bool (*appFunc)(void));
 void pauseMainLoop(bool state);
 
 bool startupFramework(void);
-void finalise(applicationStates_t appState);
+void finalize(applicationStates_t appState);
 
 #endif

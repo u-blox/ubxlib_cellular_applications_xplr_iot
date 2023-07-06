@@ -101,7 +101,7 @@ static void taskLoop(void *pParameters)
         dwellTask(taskConfig, isNotExiting);
     }
 
-    FINALISE_TASK;
+    FINALIZE_TASK;
 }
 
 static int32_t initQueue()
@@ -143,7 +143,7 @@ int32_t queueExampleCommand(commandParamsList_t *params)
 
 /// @brief Initialises the Signal Quality task
 /// @param config The task configuration structure
-/// @return zero if successfull, a negative number otherwise
+/// @return zero if successful, a negative number otherwise
 int32_t initExampleTask(taskConfig_t *config)
 {
     EXIT_IF_CONFIG_NULL;
@@ -166,7 +166,7 @@ int32_t initExampleTask(taskConfig_t *config)
 }
 
 /// @brief Starts the Signal Quality task loop
-/// @return zero if successfull, a negative number otherwise
+/// @return zero if successful, a negative number otherwise
 int32_t startExampleTaskLoop(commandParamsList_t *params)
 {
     EXIT_IF_CANT_RUN_TASK;

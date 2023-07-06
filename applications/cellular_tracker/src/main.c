@@ -87,6 +87,6 @@ void main(void)
     // Start the application loop with our app function
     runApplicationLoop(appFunction);
 
-    // all done, close down and finalise    
-    finalise(SHUTDOWN);
+    // all done, close down and finalize    
+    finalize(SHUTDOWN);
 }

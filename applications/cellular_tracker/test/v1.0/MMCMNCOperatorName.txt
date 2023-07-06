@@ -1,0 +1,79 @@
+8175: **************************************************
+8366: Cellular Tracker v1.0
+8368: **************************************************
+
+8538: Initializing the LED task...
+8541: Initiating the UBXLIB Device API...
+8547: Opening/Turning on the cellular module...
+16800: Cellular Module Serial Number: 351457830026040
+16806: Configuring the cellular module...
+16924: Initializing the Registration task...
+16929: Initializing the CellScan task...
+16935: Initializing the MQTT task...
+16938: Initializing the SignalQuality task...
+16944: Initializing the Example task...
+16949: Initializing the Location task...
+20213: Initializing the Sensor task...
+20218: Bringing up the cellular network...
+24717: Connected to Cellular Network: O2 - UK (23410)
+
+*** WARNING ************************************************
+24785: Can't get NTP Time as we are on a restricted APN
+
+
+*** WARNING ************************************************
+26335: Not publishing MQTT message, not connected to MQTT Broker
+
+26349: {"Timestamp":"25242", "CellQuality":{"RSRP":"-101", "RSRQ":"-16", "RSSI":"-67", "SNR":"-6", "RxQual":"1", "CellID":"115", "EARFCN":"6400", "PLMN":"23410", "Operator":"O2 - UK"}}
+26791: MQTT client disconnected, trying to connect...
+26797: Connecting to MQTT-SN Gateway on 10.7.0.55:2442...
+46373: Subscribed to callback topic: /351457830026040/CellScanControl
+47433: Subscribed to callback topic: /351457830026040/SignalQualityControl
+48496: Subscribed to callback topic: /351457830026040/ExampleControl
+49559: Subscribed to callback topic: /351457830026040/LocationControl
+50621: Subscribed to callback topic: /351457830026040/SensorControl
+51683: Subscribed to callback topic: /351457830026040/AppControl
+51690: Connected to MQTT-SN Gateway
+52744: {"Timestamp":"30260", "CellQuality":{"RSRP":"-101", "RSRQ":"-15", "RSSI":"-67", "SNR":"-4", "RxQual":"1", "CellID":"115", "EARFCN":"6400", "PLMN":"23410", "Operator":"O2 - UK"}}
+54525: {"Timestamp":"52765", "CellQuality":{"RSRP":"-101", "RSRQ":"-14", "RSSI":"-69", "SNR":"-2", "RxQual":"2", "CellID":"115", "EARFCN":"6400", "PLMN":"23410", "Operator":"O2 - UK"}}
+56321: {"Timestamp":"54545", "CellQuality":{"RSRP":"-101", "RSRQ":"-15", "RSSI":"-69", "SNR":"-3", "RxQual":"2", "CellID":"115", "EARFCN":"6400", "PLMN":"23410", "Operator":"O2 - UK"}}
+58113: {"Timestamp":"56341", "CellQuality":{"RSRP":"-101", "RSRQ":"-14", "RSSI":"-69", "SNR":"-4", "RxQual":"2", "CellID":"115", "EARFCN":"6400", "PLMN":"23410", "Operator":"O2 - UK"}}
+59907: {"Timestamp":"58133", "CellQuality":{"RSRP":"-100", "RSRQ":"-15", "RSSI":"-67", "SNR":"-3", "RxQual":"1", "CellID":"115", "EARFCN":"6400", "PLMN":"23410", "Operator":"O2 - UK"}}
+61697: {"Timestamp":"60026", "CellQuality":{"RSRP":"-101", "RSRQ":"-16", "RSSI":"-67", "SNR":"-4", "RxQual":"1", "CellID":"115", "EARFCN":"6400", "PLMN":"23410", "Operator":"O2 - UK"}}
+63487: {"Timestamp":"61717", "CellQuality":{"RSRP":"-100", "RSRQ":"-14", "RSSI":"-67", "SNR":"-2", "RxQual":"2", "CellID":"115", "EARFCN":"6400", "PLMN":"23410", "Operator":"O2 - UK"}}
+66047: {"Timestamp":"65423", "CellQuality":{"RSRP":"-101", "RSRQ":"-14", "RSSI":"-69", "SNR":"1", "RxQual":"2", "CellID":"115", "EARFCN":"6400", "PLMN":"23410", "Operator":"O2 - UK"}}
+71059: {"Timestamp":"70434", "CellQuality":{"RSRP":"-101", "RSRQ":"-14", "RSSI":"-69", "SNR":"-3", "RxQual":"2", "CellID":"115", "EARFCN":"6400", "PLMN":"23410", "Operator":"O2 - UK"}}
+76070: {"Timestamp":"75446", "CellQuality":{"RSRP":"-102", "RSRQ":"-15", "RSSI":"-73", "SNR":"0", "RxQual":"2", "CellID":"115", "EARFCN":"6400", "PLMN":"23410", "Operator":"O2 - UK"}}
+81548: {"Timestamp":"80458", "CellQuality":{"RSRP":"-100", "RSRQ":"-13", "RSSI":"-73", "SNR":"1", "RxQual":"2", "CellID":"115", "EARFCN":"6400", "PLMN":"23410", "Operator":"O2 - UK"}}
+86098: {"Timestamp":"85474", "CellQuality":{"RSRP":"-102", "RSRQ":"-11", "RSSI":"-73", "SNR":"2", "RxQual":"3", "CellID":"115", "EARFCN":"6400", "PLMN":"23410", "Operator":"O2 - UK"}}
+91110: {"Timestamp":"90485", "CellQuality":{"RSRP":"-101", "RSRQ":"-13", "RSSI":"-71", "SNR":"-1", "RxQual":"2", "CellID":"115", "EARFCN":"6400", "PLMN":"23410", "Operator":"O2 - UK"}}
+96122: {"Timestamp":"95497", "CellQuality":{"RSRP":"-101", "RSRQ":"-15", "RSSI":"-73", "SNR":"-3", "RxQual":"1", "CellID":"115", "EARFCN":"6400", "PLMN":"23410", "Operator":"O2 - UK"}}
+101134: {"Timestamp":"100509", "CellQuality":{"RSRP":"-102", "RSRQ":"-15", "RSSI":"-71", "SNR":"-2", "RxQual":"1", "CellID":"115", "EARFCN":"6400", "PLMN":"23410", "Operator":"O2 - UK"}}
+106146: {"Timestamp":"105521", "CellQuality":{"RSRP":"-103", "RSRQ":"-15", "RSSI":"-69", "SNR":"-4", "RxQual":"1", "CellID":"115", "EARFCN":"6400", "PLMN":"23410", "Operator":"O2 - UK"}}
+111158: {"Timestamp":"110533", "CellQuality":{"RSRP":"-103", "RSRQ":"-15", "RSSI":"-69", "SNR":"-4", "RxQual":"1", "CellID":"115", "EARFCN":"6400", "PLMN":"23410", "Operator":"O2 - UK"}}
+116170: {"Timestamp":"115545", "CellQuality":{"RSRP":"-103", "RSRQ":"-16", "RSSI":"-69", "SNR":"-4", "RxQual":"1", "CellID":"115", "EARFCN":"6400", "PLMN":"23410", "Operator":"O2 - UK"}}
+121183: {"Timestamp":"120558", "CellQuality":{"RSRP":"-103", "RSRQ":"-14", "RSSI":"-71", "SNR":"2", "RxQual":"2", "CellID":"115", "EARFCN":"6400", "PLMN":"23410", "Operator":"O2 - UK"}}
+126194: {"Timestamp":"125569", "CellQuality":{"RSRP":"-102", "RSRQ":"-15", "RSSI":"-69", "SNR":"0", "RxQual":"2", "CellID":"115", "EARFCN":"6400", "PLMN":"23410", "Operator":"O2 - UK"}}
+131206: {"Timestamp":"130581", "CellQuality":{"RSRP":"-102", "RSRQ":"-15", "RSSI":"-69", "SNR":"-1", "RxQual":"1", "CellID":"115", "EARFCN":"6400", "PLMN":"23410", "Operator":"O2 - UK"}}
+136218: {"Timestamp":"135593", "CellQuality":{"RSRP":"-102", "RSRQ":"-17", "RSSI":"-65", "SNR":"-6", "RxQual":"1", "CellID":"115", "EARFCN":"6400", "PLMN":"23410", "Operator":"O2 - UK"}}
+141230: {"Timestamp":"140605", "CellQuality":{"RSRP":"-100", "RSRQ":"-15", "RSSI":"-69", "SNR":"-2", "RxQual":"1", "CellID":"115", "EARFCN":"6400", "PLMN":"23410", "Operator":"O2 - UK"}}
+146241: {"Timestamp":"145617", "CellQuality":{"RSRP":"-102", "RSRQ":"-17", "RSSI":"-69", "SNR":"-6", "RxQual":"1", "CellID":"115", "EARFCN":"6400", "PLMN":"23410", "Operator":"O2 - UK"}}
+151254: {"Timestamp":"150629", "CellQuality":{"RSRP":"-103", "RSRQ":"-14", "RSSI":"-69", "SNR":"-3", "RxQual":"2", "CellID":"115", "EARFCN":"6400", "PLMN":"23410", "Operator":"O2 - UK"}}
+154225: Exit button pressed, closing down... Please wait for the RED LED to go out...
+155320: Disconnected from MQTT-SN Gateway
+
+************************************************************
+*** ERROR **************************************************
+155366: MQTT Disconnect callback with Error Code: 21
+
+155641: Waiting for app tasks to stop... This can take sometime if waiting for AT commands to timeout...
+155853: All tasks have now finished...
+155858: Stop Registration task requested...
+155862: Waiting for Registration task to stop...
+155867: Deregistering from the network...
+156524: Deregistered from cellular network
+157871: Application Finished.
+
+********************************************************
+*** LOG END ********************************************
+********************************************************

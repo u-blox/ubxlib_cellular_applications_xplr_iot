@@ -252,7 +252,7 @@ const char *getConfig(const char *key)
 {
     for(appConfigList_t *kvp = configList; kvp != NULL; kvp=kvp->pNext) {
         if (strcmp(kvp->key, key) == 0) {
-            if (strcmp(kvp->value, "NULL") == 0)
+            if (strncmp(kvp->value, "NULL", 4) == 0)
                 return NULL;
             else
                 return kvp->value;

@@ -43,7 +43,7 @@
 
 // This is the configuration for loading the MQTT configuration that is already on saved on the file system
 #ifdef MQTT_FILE_SYSTEM
-const char *mqtt_credentials[] = NULL       // NULL will cause the application to only load from file system
+const char *mqttCredentials[] = {};       // NULL will cause the application to only load from file system
 #endif
 
 // This is the Thingstream MQTT-Anywhere configuration.
@@ -76,11 +76,11 @@ const char *mqttCredentials[] = {
 // Port 2443 uses TLS security with client certificate and key
 #ifdef MQTT_THINGSTREAM_FLEX
 const char *mqttCredentials[] = {
-    "MQTT_TYPE MQTT",
-    "MQTT_BROKER_NAME mqtt.thingstream.io:2443",
+    "MQTT_TYPE MQTT-SN",
+    "MQTT_BROKER_NAME mqtt-flex.thingstream.io:2443",
     "MQTT_USERNAME NULL",
     "MQTT_PASSWORD NULL",
-    "MQTT_CLIENTID NULL",
+    "MQTT_CLIENTID device:5378b7ce-7e8a-4fec-afc4-58eae6ca32b0",
     "MQTT_KEEPALIVE NULL",
     "MQTT_TIMEOUT NULL",
     "MQTT_SECURITY TRUE",

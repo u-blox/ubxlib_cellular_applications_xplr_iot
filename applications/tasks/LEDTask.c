@@ -49,7 +49,7 @@ static taskConfig_t *taskConfig = NULL;
 ledAppState_t ledAppStatus[] = {
     {MANUAL, {ledRedOff, ledGreenOff, ledBlueOff}},
     {INIT_DEVICE, {ledRedFastPulse, ledGreenOff, ledBlueOff}},
-    {REGISTERING, {ledRedOff, ledGreenOff, ledBlueBlink}},
+    {REGISTERING, {ledRedOff, ledGreenOff, ledBluePulse}},
     {MQTT_CONNECTING, {ledRedOff, ledGreenPulse, ledBlueOff}},
     {COPS_QUERY, {ledRedOff, ledGreenPulse, ledBlueOn}},
     {SEND_SIGNAL_QUALITY, {ledRedFlash, ledGreenFlash, ledBlueOff}},
@@ -59,7 +59,8 @@ ledAppState_t ledAppStatus[] = {
     {SHUTDOWN, {ledRedOn, ledGreenOn, ledBlueOn}},
     {MQTT_CONNECTED, {ledRedOff, ledGreenOn, ledBlueOff}},
     {MQTT_DISCONNECTED, {ledRedOff, ledGreenFlash, ledBlueOff}},
-    {START_SIGNAL_QUALITY, {ledRedOn, ledGreenOn, ledBlueOff}},
+    {START_SIGNAL_QUALITY, {ledRedOff, ledGreenOff, ledBlueOn}},
+    {LOCATION_MEAS, {ledRedOn, ledGreenOn, ledBlueOn}},
 };
 
 /* ----------------------------------------------------------------
@@ -72,10 +73,20 @@ static void queueHandler(void *pParam, size_t paramLengthBytes)
 
 ledCfg_t *getAppStatusLEDs()
 {
+    static applicationStates_t previousAppStatus = 0;
+    static ledCfg_t *previousLedCfg = NULL;
+
+    if (gAppStatus == previousAppStatus && previousLedCfg != NULL)
+        return previousLedCfg;
+
+    previousAppStatus = gAppStatus;
+
     for(int i=0; i<NUM_ELEMENTS(ledAppStatus); i++) {
         ledAppState_t *las = &ledAppStatus[i];
-        if (las->appState == gAppStatus)
+        if (las->appState == gAppStatus) {
+            previousLedCfg = las->ledCfg;
             return las->ledCfg;
+        }
     }
 
     writeWarn("Can't find LED setting for app Status %d", gAppStatus);
@@ -123,7 +134,7 @@ static void taskLoop(void *pParameters)
     }
 
     U_PORT_MUTEX_UNLOCK(TASK_MUTEX);
-    FINALISE_TASK;
+    FINALIZE_TASK;
 }
 
 
@@ -156,7 +167,7 @@ static int32_t initMutex()
 
 /// @brief Initialises the LED task
 /// @param config The task configuration structure
-/// @return zero if successfull, a negative number otherwise
+/// @return zero if successful, a negative number otherwise
 int32_t initLEDTask(taskConfig_t *config)
 {
     EXIT_IF_CONFIG_NULL;
@@ -173,7 +184,7 @@ int32_t initLEDTask(taskConfig_t *config)
 }
 
 /// @brief Starts the LED Task loop
-/// @return zero if successfull, a negative number otherwise
+/// @return zero if successful, a negative number otherwise
 int32_t startLEDTaskLoop(commandParamsList_t *params)
 {
     EXIT_IF_CANT_RUN_TASK;
