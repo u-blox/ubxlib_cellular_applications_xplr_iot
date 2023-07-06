@@ -5,7 +5,6 @@ This page describes the various applications this repository has available and h
 <br />
 
 ## LED indicator
----
 The XPLR-IoT-1 development platform has a RGB LED indicator on the front of the box. This application framework allows the application to set the LEDs independently, with various flashing and blinking modes. 
 
 ### Application startup LED indicator
