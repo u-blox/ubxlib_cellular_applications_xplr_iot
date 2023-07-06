@@ -58,6 +58,8 @@
  */
 #define TIMESTAMP_MAX_LENTH_BYTES   13
 
+#define OPERATOR_NAME_SIZE          20
+
 /* ----------------------------------------------------------------
  * PUBLIC TYPE DEFINITIONS
  * -------------------------------------------------------------- */

@@ -44,6 +44,9 @@
 // This flag represents the module can hear the network signaling
 bool gIsNetworkSignalValid = false;
 
+extern char pOperatorName[OPERATOR_NAME_SIZE];
+extern int32_t operatorMcc, operatorMnc;
+
 /* ----------------------------------------------------------------
  * TASK COMMON VARIABLES
  * -------------------------------------------------------------- */
@@ -101,15 +104,17 @@ static void measureSignalQuality(void)
         int32_t earfcn = uCellInfoGetEarfcn(gDeviceHandle);
 
         char format[] = "{" \
-            "\"Timestamp\":\"%s\", "    \
-            "\"CellQuality\":{"         \
-                "\"RSRP\":\"%d\", "     \
-                "\"RSRQ\":\"%d\", "     \
-                "\"RSSI\":\"%d\", "     \
-                "\"SNR\":\"%d\", "     \
-                "\"RxQual\":\"%d\", "   \
-                "\"CellID\":\"%d\", "   \
-                "\"EARFCN\":\"%d\"}"    \
+            "\"Timestamp\":\"%s\", "        \
+            "\"CellQuality\":{"             \
+                "\"RSRP\":\"%d\", "         \
+                "\"RSRQ\":\"%d\", "         \
+                "\"RSSI\":\"%d\", "         \
+                "\"SNR\":\"%d\", "          \
+                "\"RxQual\":\"%d\", "       \   
+                "\"CellID\":\"%d\", "       \
+                "\"EARFCN\":\"%d\", "       \
+                "\"PLMN\":\"%03d%02d\", "   \                
+                "\"Operator\":\"%s\"}"      \
         "}";
 
         // Checking if RSRP is not zero is a great way to
@@ -117,7 +122,9 @@ static void measureSignalQuality(void)
         // See marcro "IS_NETWORK_AVAILABLE"
         gIsNetworkSignalValid = (rsrp != 0);
 
-        snprintf(jsonBuffer, JSON_STRING_LENGTH, format, timestamp, rsrp, rsrq, rssi, snr, rxqual, cellId, earfcn);
+        snprintf(jsonBuffer, JSON_STRING_LENGTH, format, timestamp, 
+                                rsrp, rsrq, rssi, snr, rxqual, 
+                                cellId, earfcn, operatorMcc, operatorMnc, pOperatorName);
         sendMQTTMessage(topicName, jsonBuffer, U_MQTT_QOS_AT_MOST_ONCE, false);
         writeAlways(jsonBuffer);
     } else {

@@ -44,23 +44,10 @@
 static bool exitTask = false;
 static taskConfig_t *taskConfig = NULL;
 
-/// @brief check if the application is exiting, or task stopping
-static bool isNotExiting(void)
-{
-    return !gExitApp && !exitTask;
-}
-
-// This is here as it needs to be defined before the network cfg cell just below
-static bool keepGoing(void *pParam)
-{
-    bool kg = isNotExiting();
-    if (kg)
-        printDebug("Still trying to register on a network...");
-    else
-        printDebug("Network registration cancelled");
-
-    return kg;
-}
+/* ----------------------------------------------------------------
+ * FUNCTION DECLARATIONS
+ * -------------------------------------------------------------- */
+static bool keepGoing(void *pParam);
 
 /* ----------------------------------------------------------------
  * STATIC VARIABLES
@@ -98,9 +85,47 @@ bool gIsNetworkUp = false;
 /// The unix network time, which is retrieved after first registration
 extern int64_t unixNetworkTime;
 
+char pOperatorName[OPERATOR_NAME_SIZE] = "Unknown";
+int32_t operatorMcc = 0;
+int32_t operatorMnc = 0;
+
 /* ----------------------------------------------------------------
  * STATIC FUNCTIONS
  * -------------------------------------------------------------- */
+
+/// @brief check if the application is exiting, or task stopping
+static bool isNotExiting(void)
+{
+    return !gExitApp && !exitTask;
+}
+
+// This is here as it needs to be defined before the network cfg cell just below
+static bool keepGoing(void *pParam)
+{
+    bool kg = isNotExiting();
+    if (kg)
+        printDebug("Still trying to register on a network...");
+    else
+        printDebug("Network registration cancelled");
+
+    return kg;
+}
+
+static int32_t getNetworkInfo()
+{
+    // request the PLMN / network operator information
+    int32_t errorCode = uCellNetGetOperatorStr(gDeviceHandle, pOperatorName, OPERATOR_NAME_SIZE);
+    if (errorCode < 0) {
+        writeWarn("Failed to get operator name: %d", errorCode);
+    } else {
+        errorCode = uCellNetGetMccMnc(gDeviceHandle, &operatorMcc, &operatorMnc);
+        if (errorCode < 0) {
+            writeWarn("Failed to get MCC/MNC: %d", errorCode);
+        }
+    }
+
+    return errorCode;
+}
 
 static void networkStatusCallback(uDeviceHandle_t devHandle,
                              uNetworkType_t netType,
@@ -109,14 +134,19 @@ static void networkStatusCallback(uDeviceHandle_t devHandle,
                              void *pParameter)
 {
     // count the number of times the network 'goes up'
-    if (!gIsNetworkUp && isUp)
+    if (!gIsNetworkUp && isUp) {
         networkUpCounter++;
+
+        getNetworkInfo();
+    }
 
     writeLog("Network Status: %s", isUp ? "Registered" : "Unknown");
     gIsNetworkUp = isUp;
 
-    if (!isUp)
+    if (!isUp) {
         gAppStatus = REGISTRATION_UNKNOWN;
+        strncpy(pOperatorName, "Unknown", OPERATOR_NAME_SIZE);
+    }
 }
 
 static bool usingRestrictedAPN(void)
@@ -174,7 +204,8 @@ static int32_t startNetworkRegistration(void)
     gAppStatus = REGISTERED;
     networkUpCounter=1;
 
-    writeLog("Connected to Cellular Network");
+    getNetworkInfo();
+    writeLog("Connected to Cellular Network: %s (%03d%02d)", pOperatorName, operatorMcc, operatorMnc);
     return 0;
 }
 

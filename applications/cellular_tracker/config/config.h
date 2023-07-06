@@ -57,6 +57,9 @@
  * THINGSTREAM SIMS:-
  *  -   Must use 'TSUDP' for Thingstream MQTT-Anywhere.
  *  -   USE 'TSIOT' for 'normal' internet use.
+ * 
+ * Other SIMS:-
+ *  -   Use blank string "" for network provided APN
  *
  * RESTRICTED APNS:-
  *  -   In the tasks/registrationTask.c file there is a list of APNs
@@ -64,12 +67,14 @@
  *      queries are not available, like the NTP service on TSUDP APN.
  *      Edit this list for other APNs which are restricted/limited.
  * -------------------------------------------------------------- */
-#define APN "TSUDP"
+#define APN "TSUDP"     // Thingstream MQTT-Anywhere
+//#define APN "TSIOT"     // Thingstream SIM other brokers
+//#define APN ""          // Blank - network provided APN
 
 /* ----------------------------------------------------------------
  * MQTT CREDENTIALS SELECTION
  *
- * Please select, using ONE #define below, which mqtt configuration
+ * Please select, using ONE #define below, which MQTT configuration
  * to use for this application.
  * Use 'MQTT_FILE_SYSTEM' to load the config stored on the 
  * file system, saved earlier.
@@ -77,10 +82,10 @@
  * Each are described in the src/mqtt_credentials.c file
  * ----------------------------------------------------------------*/
 // *** Load credentials from file system ONLY ***
-#define MQTT_FILE_SYSTEM
+//#define MQTT_FILE_SYSTEM
 
 // *** Thingstream MQTT Services - remember to set TSUDP as the APN for MQTT-ANYWHERE
-//#define MQTT_THINGSTREAM_ANYWHERE
+#define MQTT_THINGSTREAM_ANYWHERE
 //#define MQTT_THINGSTREAM_FLEX
 //#define MQTT_THINGSTREAM_NOW_NoTLS_Auth
 //#define MQTT_THINGSTREAM_NOW_TLS_Auth

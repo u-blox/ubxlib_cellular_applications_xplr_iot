@@ -1,6 +1,6 @@
 # Applications
 
-This page describes the various application this repository has available and how they generally operate.
+This page describes the various applications this repository has available and how they generally operate.
 
 <br />
 
@@ -22,9 +22,8 @@ The Boot, Registration, MQTT activity and cell scanning activity has the followi
 
 ### Activity LED indicator
 
-- Published MQTT message: Blip Green
-- Cell Scan: Blue / Blip Blue
-
+- MQTT Connected, registered: Green
+- Cell Scan: Blue / Blip white
 
 <br />
 
