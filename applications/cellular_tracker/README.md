@@ -20,9 +20,9 @@ Using the [config.h](config/config.h) file in the [config](config/) folder you w
 For the MQTT connection, there is a #define of the MQTT credentials which to use for this application. Please see the [mqttCredentials.c](src/mqtt_credentials.c) file for examples of MQTT broker settings.
 
 # LED indicators
-MQTT Connected / Registered: Green
-Publish Signal quality measurement: Blue
-Publish Location: White
+- MQTT Connected / Registered: Green
+- Publish Signal quality measurement: Blue
+- Publish Location: White
 
 # Application remote commands
 
