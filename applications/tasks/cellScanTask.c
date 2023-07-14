@@ -95,7 +95,7 @@ static void doCellScan(void *pParams)
     uCellNetRat_t rat = U_CELL_NET_RAT_UNKNOWN_OR_NOT_USED;
 
     U_PORT_MUTEX_LOCK(TASK_MUTEX);
-    SET_APP_STATUS(COPS_QUERY);
+    gAppStatus = COPS_QUERY;
     
     pauseMainLoop(true);
 
@@ -144,7 +144,6 @@ static void doCellScan(void *pParams)
 
     pauseMainLoop(false);
 
-    REVERT_APP_STATUS();
     U_PORT_MUTEX_UNLOCK(TASK_MUTEX);
 }
 

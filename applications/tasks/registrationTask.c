@@ -93,25 +93,37 @@ int32_t operatorMnc = 0;
  * STATIC FUNCTIONS
  * -------------------------------------------------------------- */
 
+static void clearOperatorInfo(void)
+{
+    strncpy(pOperatorName, "Unknown", OPERATOR_NAME_SIZE);
+    operatorMcc = 0;
+    operatorMnc = 0;
+}
+
 /// @brief check if the application is exiting, or task stopping
 static bool isNotExiting(void)
 {
+    if (!gIsNetworkUp) {
+        gAppStatus = REGISTRATION_UNKNOWN;
+        clearOperatorInfo();
+    }
+
     return !gExitApp && !exitTask;
 }
 
 // This is here as it needs to be defined before the network cfg cell just below
 static bool keepGoing(void *pParam)
 {
-    bool kg = isNotExiting();
-    if (kg)
+    bool keepGoing = isNotExiting();
+    if (keepGoing)
         printDebug("Still trying to register on a network...");
     else
         printDebug("Network registration cancelled");
 
-    return kg;
+    return keepGoing;
 }
 
-static int32_t getNetworkInfo()
+static int32_t getNetworkInfo(void)
 {
     // request the PLMN / network operator information
     int32_t errorCode = uCellNetGetOperatorStr(gDeviceHandle, pOperatorName, OPERATOR_NAME_SIZE);
@@ -137,7 +149,8 @@ static void networkStatusCallback(uDeviceHandle_t devHandle,
     if (!gIsNetworkUp && isUp) {
         networkUpCounter++;
 
-        getNetworkInfo();
+        gAppStatus = REGISTERED;
+        getNetworkInfo();        
     }
 
     writeLog("Network Status: %s", isUp ? "Registered" : "Unknown");
@@ -145,7 +158,7 @@ static void networkStatusCallback(uDeviceHandle_t devHandle,
 
     if (!isUp) {
         gAppStatus = REGISTRATION_UNKNOWN;
-        strncpy(pOperatorName, "Unknown", OPERATOR_NAME_SIZE);
+        clearOperatorInfo();
     }
 }
 

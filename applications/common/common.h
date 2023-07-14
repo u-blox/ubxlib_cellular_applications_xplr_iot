@@ -39,9 +39,6 @@
 /* ----------------------------------------------------------------
  * MACORS for common task usage/access
  * -------------------------------------------------------------- */
-#define SET_APP_STATUS(x)           tempAppStatus = gAppStatus; gAppStatus = x
-#define REVERT_APP_STATUS()        gAppStatus = tempAppStatus
-
 #define IS_NETWORK_AVAILABLE        (gIsNetworkSignalValid && gIsNetworkUp)
 
 #define NUM_ELEMENTS(x)             (sizeof(x) / sizeof(x[0]))

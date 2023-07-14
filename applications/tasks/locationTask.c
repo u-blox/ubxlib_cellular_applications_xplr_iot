@@ -89,14 +89,14 @@ static bool isNotExiting(void)
 
 static bool keepGoing(void *pParam)
 {
-    bool kg = isNotExiting();
-    if (kg) {
-        printDebug("Waiting for GNSS...");
+    bool keepGoing = isNotExiting();
+    if (keepGoing) {
+        printDebug("Waiting for GNSS location...");
     } else {
         printDebug("GNSS location cancelled");
     }
 
-    return kg;
+    return keepGoing;
 }
 
 static char fractionConvert(int32_t x1e7,
@@ -121,6 +121,11 @@ static void publishLocation(uLocation_t location)
 {
     int32_t whole;
     int32_t fraction;
+
+    if (IS_NETWORK_AVAILABLE) {
+        printDebug("publishLocation(): Network is not attached.");
+        return;
+    }
 
     gAppStatus = LOCATION_MEAS;
 
@@ -155,7 +160,7 @@ static void publishLocation(uLocation_t location)
 static void getLocation(void *pParams)
 {
     if (gettingLocation) {
-        printDebug("Already trying to get location...");
+        printDebug("getLocation(): Already trying to get location...");
         return;
     }
 

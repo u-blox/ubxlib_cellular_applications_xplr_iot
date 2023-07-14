@@ -110,8 +110,7 @@ static void mqttSendMessage(sendMQTTMsg_t msg)
     int32_t errorCode = U_ERROR_COMMON_NOT_INITIALISED;
 
     bool mqttConnected = uMqttClientIsConnected(pContext);
-
-    if (pContext != NULL && mqttConnected && gIsNetworkUp && gIsNetworkSignalValid) {
+    if (pContext != NULL && mqttConnected && IS_NETWORK_AVAILABLE) {
         if (mqttSN) {
             errorCode = uMqttClientSnPublish(pContext, msg.topic.pShortName, msg.pMessage,
                                                     strlen(msg.pMessage),
@@ -123,28 +122,25 @@ static void mqttSendMessage(sendMQTTMsg_t msg)
                                                     msg.QoS,
                                                     msg.retain);
         }
-        gAppStatus = MQTT_CONNECTED;
+
+        if (errorCode == 0) {
+            writeDebug("Published MQTT message");
+        } else {
+            int32_t errValue = uMqttClientGetLastErrorCode(pContext);
+            writeWarn("Failed to publish MQTT message, %s error: ", errValue);
+        }
+
+    } else {
+        writeWarn("Network or MQTT connection not available, not publishing message");
     }
 
-    if (!mqttConnected)
-        gAppStatus = MQTT_DISCONNECTED;
+    gAppStatus = mqttConnected ? MQTT_CONNECTED : MQTT_DISCONNECTED;
 
     uPortFree(msg.pMessage);
     if (mqttSN)
         uPortFree(msg.topic.pShortName);
     else
         uPortFree(msg.topic.pTopicName);
-
-    if (errorCode == 0)
-        writeDebug("Published MQTT message");
-    else {
-        if (errorCode == U_ERROR_COMMON_NOT_INITIALISED) {
-            writeDebug("Network or MQTT server not available, not publishing message");
-        } else {
-            int32_t errValue = uMqttClientGetLastErrorCode(pContext);
-            writeWarn("Failed to publish MQTT message, %s error: ", errValue);
-        }
-    }
 }
 
 static void queueHandler(void *pParam, size_t paramLengthBytes)
