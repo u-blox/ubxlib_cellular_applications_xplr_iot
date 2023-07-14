@@ -380,7 +380,7 @@ static void taskLoop(void *pParameters)
     {
         if (!uMqttClientIsConnected(pContext)) {
             gAppStatus = MQTT_DISCONNECTED;
-            if (gIsNetworkUp && gIsNetworkSignalValid) {
+            if (IS_NETWORK_AVAILABLE) {
                 writeLog("MQTT client disconnected, trying to connect...");
                 if (connectBroker() != U_ERROR_COMMON_SUCCESS)
                     uPortTaskBlock(5000);
