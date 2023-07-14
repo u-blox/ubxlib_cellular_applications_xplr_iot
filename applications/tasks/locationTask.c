@@ -122,7 +122,7 @@ static void publishLocation(uLocation_t location)
     int32_t whole;
     int32_t fraction;
 
-    if (IS_NETWORK_AVAILABLE) {
+    if (!IS_NETWORK_AVAILABLE) {
         printDebug("publishLocation(): Network is not attached.");
         return;
     }
