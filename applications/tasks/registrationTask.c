@@ -104,7 +104,6 @@ static void clearOperatorInfo(void)
 static bool isNotExiting(void)
 {
     if (!gIsNetworkUp) {
-        gAppStatus = REGISTRATION_UNKNOWN;
         clearOperatorInfo();
     }
 
@@ -114,11 +113,18 @@ static bool isNotExiting(void)
 // This is here as it needs to be defined before the network cfg cell just below
 static bool keepGoing(void *pParam)
 {
+    if (gAppStatus == COPS_QUERY) {
+        printInfo("Cancelling network scanning, network query requested");
+        return false;
+    }
+
     bool keepGoing = isNotExiting();
-    if (keepGoing)
+    if (keepGoing) {
+        gAppStatus = REGISTRATION_UNKNOWN;
         printDebug("Still trying to register on a network...");
-    else
+    } else {
         printDebug("Network registration cancelled");
+    }
 
     return keepGoing;
 }
@@ -145,19 +151,31 @@ static void networkStatusCallback(uDeviceHandle_t devHandle,
                              uNetworkStatus_t *pStatus,
                              void *pParameter)
 {
+    // Ignore the Circuit Switched domain here as we are only interested in PS
+    if (pStatus->cell.domain != U_CELL_NET_REG_DOMAIN_PS)
+        return;
+
     // count the number of times the network 'goes up'
     if (!gIsNetworkUp && isUp) {
         networkUpCounter++;
-
-        gAppStatus = REGISTERED;
-        getNetworkInfo();        
     }
 
-    writeLog("Network Status: %s", isUp ? "Registered" : "Unknown");
     gIsNetworkUp = isUp;
 
-    if (!isUp) {
-        gAppStatus = REGISTRATION_UNKNOWN;
+    uCellNetStatus_t cellStatus = (uCellNetStatus_t) pStatus->cell.status;
+    if (isUp) {
+        gAppStatus = REGISTERED;
+        getNetworkInfo();
+        writeLog("Network is Registered: %s", cellStatus == U_CELL_NET_STATUS_REGISTERED_ROAMING ? "Roaming" : "Home");
+    } else {
+        if (cellStatus == U_CELL_NET_STATUS_REGISTRATION_DENIED) {
+            gAppStatus = REGISTRATION_DENIED;
+            writeLog("Network denied registration.");
+        } else {
+            gAppStatus = REGISTRATION_UNKNOWN;
+            writeLog("Network status unknown.");
+        }
+
         clearOperatorInfo();
     }
 }
@@ -199,9 +217,16 @@ static void getNetworkOrNTPTime(void)
 
 static int32_t startNetworkRegistration(void)
 {
+    if (gAppStatus == COPS_QUERY) {
+        printInfo("Not brining up the cellular network, running network query.");
+        return U_ERROR_COMMON_NOT_SUPPORTED;
+    }
+
     gAppStatus = REGISTERING;
     writeLog("Bringing up the cellular network...");
     int32_t errorCode = uNetworkInterfaceUp(gDeviceHandle, gNetworkType, &gNetworkCfg);
+    if (gExitApp) return U_ERROR_COMMON_SUCCESS;
+
     if (errorCode != 0) {
         writeWarn("Failed to bring up the cellular network: %d", errorCode);
         return errorCode;
@@ -224,8 +249,11 @@ static int32_t startNetworkRegistration(void)
 
 static int32_t deRegisterFromNetwork(void)
 {
+    if (networkUpCounter == 0)
+        return U_ERROR_COMMON_SUCCESS;
+
     gAppStatus = REGISTERING;
-    writeLog("Deregistering from the network...");
+    writeLog("De-registering from the network...");
     int32_t errorCode = uNetworkInterfaceDown(gDeviceHandle, gNetworkType);
     if (errorCode != 0) {
         writeWarn("Failed to de-register from the cellular network: %d", errorCode);
@@ -266,7 +294,7 @@ static void taskLoop(void *pParameters)
                 writeDebug("Network is up and running");
             } else {
                 gAppStatus = REGISTRATION_UNKNOWN;
-                writeLog("Unknown network registration state");
+                writeLog("Network connection is down...");
                 // What can we do here? not a lot.
             }
 

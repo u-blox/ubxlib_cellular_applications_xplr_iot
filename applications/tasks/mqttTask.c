@@ -219,8 +219,9 @@ static int32_t connectBroker(void)
 static int32_t disconnectBroker(void)
 {
     int32_t errorCode = uMqttClientDisconnect(pContext);
-    if (errorCode != 0) {
-        writeError("Failed to disconnect from %s: %d", MQTT_TYPE_NAME, errorCode);
+    if (errorCode < 0) {
+        if (!gExitApp)
+            writeError("Failed to disconnect from %s: %d", MQTT_TYPE_NAME, errorCode);
     } else {
         writeLog("Disconnected from %s", MQTT_TYPE_NAME);
     }
