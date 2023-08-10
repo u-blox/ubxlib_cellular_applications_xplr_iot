@@ -112,7 +112,7 @@ static void measureSignalQuality(void)
                 "\"RSRP\":\"%d\", "         \
                 "\"RSRQ\":\"%d\", "         \
                 "\"RSSI\":\"%d\", "         \
-                "\"SNR\":\"%d\"}"           \
+                "\"SNR\":\"%d\"}, "         \
             "\"CellInfo\":{"                \
                 "\"RxQual\":\"%d\", "       \
                 "\"CellID\":\"%d\", "       \
