@@ -23,7 +23,7 @@
 #include <time.h>
 
 #include "common.h"
-#include "ntpclient.h"
+#include "NTPClient.h"
 #include "..\include\zephyr\sys\byteorder.h"
 
 /* ----------------------------------------------------------------
