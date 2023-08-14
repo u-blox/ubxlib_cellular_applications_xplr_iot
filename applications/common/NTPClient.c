@@ -24,7 +24,7 @@
 
 #include "common.h"
 #include "NTPClient.h"
-#include "..\include\zephyr\sys\byteorder.h"
+#include "byteorder.h"
 
 /* ----------------------------------------------------------------
  * DEFINES
