@@ -109,12 +109,12 @@ static void measureSignalQuality(void)
         char format[] = "{" \
             "\"Timestamp\":%" PRId64 ", "   \
             "\"CellQuality\":{"             \
-                "\"RSRP\":\"%d\", "         \
-                "\"RSRQ\":\"%d\", "         \
-                "\"RSSI\":\"%d\", "         \
-                "\"SNR\":\"%d\"}, "         \
+                "\"RSRP\":%d, "             \
+                "\"RSRQ\":%d, "             \
+                "\"RSSI\":%d, "             \
+                "\"SNR\":%d}, "             \
             "\"CellInfo\":{"                \
-                "\"RxQual\":\"%d\", "       \
+                "\"RxQual\":%d, "           \
                 "\"CellID\":\"%d\", "       \
                 "\"EARFCN\":\"%d\", "       \
                 "\"PLMN\":\"%03d%02d\", "   \
