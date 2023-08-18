@@ -133,14 +133,14 @@ static void publishLocation(uLocation_t location)
     getTimeStamp(timestamp);
 
     char format[] = "{"                                         \
-            "\"Timestamp\":%" PRId64 ", "                       \
+            "\"Timestamp\":%" PRId64 ","                        \
             "\"Location\":{"                                    \
-                "\"Altitude\":%d, "                             \
-                "\"Latitude\":%c%d.%07d, "                      \
-                "\"Longitude\":%c%d.%07d, "                     \
-                "\"Accuracy\":%d, "                             \
-                "\"Speed\":%d, "                                \
-                "\"GNSSTimestamp\":%" PRId64 "}"                     \
+                "\"Altitude\":%d,"                              \
+                "\"Latitude\":%c%d.%07d,"                       \
+                "\"Longitude\":%c%d.%07d,"                      \
+                "\"Accuracy\":%d,"                              \
+                "\"Speed\":%d,"                                 \
+                "\"GNSSTimestamp\":%" PRId64 "}"                \
         "}";
 
     //struct tm *t = gmtime(&location.timeUtc);

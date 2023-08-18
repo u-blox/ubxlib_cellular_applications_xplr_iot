@@ -107,17 +107,17 @@ static void measureSignalQuality(void)
         int32_t earfcn = uCellInfoGetEarfcn(gDeviceHandle);
 
         char format[] = "{" \
-            "\"Timestamp\":%" PRId64 ", "   \
+            "\"Timestamp\":%" PRId64 ","    \
             "\"CellQuality\":{"             \
-                "\"RSRP\":%d, "             \
-                "\"RSRQ\":%d, "             \
-                "\"RSSI\":%d, "             \
-                "\"SNR\":%d}, "             \
+                "\"RSRP\":%d,"              \
+                "\"RSRQ\":%d,"              \
+                "\"RSSI\":%d,"              \
+                "\"SNR\":%d},"              \
             "\"CellInfo\":{"                \
-                "\"RxQual\":%d, "           \
-                "\"CellID\":\"%d\", "       \
-                "\"EARFCN\":\"%d\", "       \
-                "\"PLMN\":\"%03d%02d\", "   \
+                "\"RxQual\":%d,"            \
+                "\"CellID\":\"%d\","        \
+                "\"EARFCN\":\"%d\","        \
+                "\"PLMN\":\"%03d%02d\","    \
                 "\"Operator\":\"%s\"}"      \
         "}";
 
