@@ -140,10 +140,10 @@ static void publishLocation(uLocation_t location)
                 "\"Longitude\":%c%d.%07d, "                     \
                 "\"Accuracy\":%d, "                             \
                 "\"Speed\":%d, "                                \
-                "\"Time\":\"%4d-%02d-%02d %02d:%02d:%02d\"}"    \
+                "\"GNSSTimestamp\":%" PRId64 "}"                     \
         "}";
 
-    struct tm *t = gmtime(&location.timeUtc);
+    //struct tm *t = gmtime(&location.timeUtc);
 
     snprintf(jsonBuffer, JSON_STRING_LENGTH, format, (unixNetworkTime + (uPortGetTickTimeMs() / 1000)),
             location.altitudeMillimetres,
@@ -151,7 +151,7 @@ static void publishLocation(uLocation_t location)
             FRACTION_FORMAT(location.longitudeX1e7, TEN_MILLIONTH),
             location.radiusMillimetres,
             location.speedMillimetresPerSecond,
-            t->tm_year + 1900, t->tm_mon, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec);
+            location.timeUtc);
 
     sendMQTTMessage(topicName, jsonBuffer, U_MQTT_QOS_AT_MOST_ONCE, false);
     writeAlways(jsonBuffer);
