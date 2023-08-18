@@ -133,7 +133,7 @@ static void publishLocation(uLocation_t location)
     getTimeStamp(timestamp);
 
     char format[] = "{"                                         \
-            "\"Timestamp\":\"%s\", "                            \
+            "\"Timestamp\":%" PRId64 ", "                       \
             "\"Location\":{"                                    \
                 "\"Altitude\":\"%d\", "                  \
                 "\"Latitude\":\"%c%d.%07d\", "                  \
@@ -145,7 +145,7 @@ static void publishLocation(uLocation_t location)
 
     struct tm *t = gmtime(&location.timeUtc);
 
-    snprintf(jsonBuffer, JSON_STRING_LENGTH, format, timestamp,
+    snprintf(jsonBuffer, JSON_STRING_LENGTH, format, (unixNetworkTime + (uPortGetTickTimeMs() / 1000)),
             location.altitudeMillimetres,
             FRACTION_FORMAT(location.latitudeX1e7,  TEN_MILLIONTH),
             FRACTION_FORMAT(location.longitudeX1e7, TEN_MILLIONTH),

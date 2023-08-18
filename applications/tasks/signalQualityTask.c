@@ -107,7 +107,7 @@ static void measureSignalQuality(void)
         int32_t earfcn = uCellInfoGetEarfcn(gDeviceHandle);
 
         char format[] = "{" \
-            "\"Timestamp\":\"%s\", "        \
+            "\"Timestamp\":%" PRId64 ", "   \
             "\"CellQuality\":{"             \
                 "\"RSRP\":\"%d\", "         \
                 "\"RSRQ\":\"%d\", "         \
@@ -126,7 +126,7 @@ static void measureSignalQuality(void)
         // See macro "IS_NETWORK_AVAILABLE"
         gIsNetworkSignalValid = (rsrp != 0) && (rsrq != 2147483647);
 
-        snprintf(jsonBuffer, JSON_STRING_LENGTH, format, timestamp, 
+        snprintf(jsonBuffer, JSON_STRING_LENGTH, format, (unixNetworkTime + (uPortGetTickTimeMs() / 1000)), 
                                 rsrp, rsrq, rssi, snr, rxqual, 
                                 cellId, earfcn, operatorMcc, operatorMnc, pOperatorName);
         sendMQTTMessage(topicName, jsonBuffer, U_MQTT_QOS_AT_MOST_ONCE, false);
