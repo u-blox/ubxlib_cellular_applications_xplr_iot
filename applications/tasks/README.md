@@ -56,30 +56,30 @@ The API for this TASK only requires a MQTT or MQTT-SN flag to be set in the mqtt
 # Sending commands
 Application tasks subscribe to a particular MQTT topic so they can listen to commands coming from the cloud. Each MQTT command topic starts with the \<IMEI> of the module and then "xxxControl" for that xxxTask.
 
-## Topic : /\<IMEI>/AppControl
+## Topic : <IMEI>/AppControl
  - SET_DWELL_TIME \<dwell time ms> : Sets the time between the main application requests for signal quality measurement+location
 
-## Topic : /\<IMEI>/SignalQualityControl
+## Topic : <IMEI>/SignalQualityControl
  - MEASURE_NOW : Request a signal quality measurement to be made now and published to the cloud via MQTT
  - START_TASK \[dwell time seconds] : Starts the task loop with the specified dwell time, or uses the default if missing
  - STOP_TASK : Stops the task loop
 
-## Topic : /\<IMEI>/SensorsControl
+## Topic : <IMEI>/SensorsControl
  - MEASURE_NOW : Request a sensor measurement to be made now and published to the cloud via MQTT
  - START_TASK \[dwell time seconds] : Starts the task loop with the specified dwell time, or uses the default if missing
  - STOP_TASK : Stops the task loop
 
-## Topic : /\<IMEI>/LocationControl
+## Topic : <IMEI>/LocationControl
  - LOCATION_NOW : Request a location measurement to be made now and published to the cloud via MQTT
  - START_TASK \[dwell time seconds] : Starts the task loop with the specified dwell time, or uses the default if missing
  - STOP_TASK : Stops the task loop
 
-## Topic : /\<IMEI>/ExampleControl
+## Topic : <IMEI>/ExampleControl
  - RUN_EXAMPLE : Runs the example task's "event" (printLog)
  - START_TASK \[dwell time seconds] : Starts the task loop with the specified dwell time, or uses the default if missing
  - STOP_TASK : Stops the task loop
 
-## Topic : /\<IMEI>/SensorsControl
+## Topic : <IMEI>/SensorsControl
  - MEASURE_NOW : Request a sensor measurement to be made now and published to the cloud via MQTT
  - START_TASK \[dwell time seconds] : Starts the task loop with the specified dwell time, or uses the default if missing
  - STOP_TASK : Stops the task loop
