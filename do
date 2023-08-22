@@ -66,7 +66,7 @@ def find_uart0():
     if 'uart_name' in settings:
         return settings['uart_name']
     for port in list_ports.comports():
-        if re.search("CP210.+Interface 0", str(port)):
+        if re.search("/dev/ttyUSB0", str(port)):
             return port.device
     error_exit("Failed to detect the serial port.\nIs the unit connected?")
 
