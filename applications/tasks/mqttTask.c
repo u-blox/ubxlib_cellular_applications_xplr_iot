@@ -691,7 +691,7 @@ int32_t subscribeToTopicAsync(const char *taskTopicName, uMqttQos_t qos, callbac
         goto cleanUp;
     }
 
-    snprintf(tempTopicName, TEMP_TOPIC_NAME_SIZE, "/%s/%s", gSerialNumber, taskTopicName);
+    snprintf(tempTopicName, TEMP_TOPIC_NAME_SIZE, "%s/%s", gSerialNumber, taskTopicName);
     topicName = uStrDup(tempTopicName);
     if (topicName == NULL) {
         writeError("Failed to create task topic name - not enough memory");

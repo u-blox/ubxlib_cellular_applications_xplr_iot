@@ -29,7 +29,7 @@ For the MQTT connection, there is a #define of the MQTT credentials which to use
 The application can be remotely controlled through various topics which are subscribed to by the application tasks. 
 
 A typical log output shows what the commands are for each task, and main application
-> Subscribed to callback topic: /351457830026040/SensorControl
+> Subscribed to callback topic: 351457830026040/SensorControl
 >
 > With these commands:
 >
