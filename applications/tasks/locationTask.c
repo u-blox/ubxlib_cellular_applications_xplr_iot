@@ -104,7 +104,7 @@ static char fractionConvert(int32_t x1e7,
                           int32_t *pFraction,
                           int32_t divider)
 {
-    char prefix = '+';
+    char prefix = ' ';
 
     // Deal with the sign
     if (x1e7 < 0) {
@@ -132,14 +132,14 @@ static void publishLocation(uLocation_t location)
     char timestamp[TIMESTAMP_MAX_LENTH_BYTES];
     getTimeStamp(timestamp);
 
-    char format[] = "{"                                         \
-            "\"Timestamp\":\"%s\", "                            \
-            "\"Location\":{"                                    \
-                "\"Altitude\":\"%d\", "                  \
-                "\"Latitude\":\"%c%d.%07d\", "                  \
-                "\"Longitude\":\"%c%d.%07d\", "                 \
-                "\"Accuracy\":\"%d\", "                  \
-                "\"Speed\":\"%d\", "                     \
+    char format[] = "{"                         \
+            "\"Timestamp\":\"%s\", "            \
+            "\"Location\":{"                    \
+                "\"Altitude\":%d, "             \
+                "\"Latitude\":%c%d.%07d, "      \
+                "\"Longitude\":%c%d.%07d, "     \
+                "\"Accuracy\":%d, "             \
+                "\"Speed\":%d, "                \
                 "\"Time\":\"%4d-%02d-%02d %02d:%02d:%02d\"}"    \
         "}";
 

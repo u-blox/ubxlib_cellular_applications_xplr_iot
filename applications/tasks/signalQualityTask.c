@@ -103,22 +103,24 @@ static void measureSignalQuality(void)
         int32_t rxqual = uCellInfoGetRxQual(gDeviceHandle);
         int32_t snr;
         uCellInfoGetSnrDb(gDeviceHandle, &snr);
-        int32_t cellId = uCellInfoGetCellId(gDeviceHandle);
+        int32_t logicalCellId = uCellInfoGetCellIdLogical(gDeviceHandle);
+        int32_t physicalCellId = uCellInfoGetCellIdPhysical(gDeviceHandle);
         int32_t earfcn = uCellInfoGetEarfcn(gDeviceHandle);
 
         char format[] = "{" \
-            "\"Timestamp\":\"%s\", "        \
-            "\"CellQuality\":{"             \
-                "\"RSRP\":\"%d\", "         \
-                "\"RSRQ\":\"%d\", "         \
-                "\"RSSI\":\"%d\", "         \
-                "\"SNR\":\"%d\"}, "         \
-            "\"CellInfo\":{"                \
-                "\"RxQual\":\"%d\", "       \
-                "\"CellID\":\"%d\", "       \
-                "\"EARFCN\":\"%d\", "       \
-                "\"PLMN\":\"%03d%02d\", "   \
-                "\"Operator\":\"%s\"}"      \
+            "\"Timestamp\":\"%s\", "                \
+            "\"CellQuality\":{"                     \
+                "\"RSRP\":%d, "                     \
+                "\"RSRQ\":%d, "                     \
+                "\"RSSI\":%d, "                     \
+                "\"SNR\":%d, "                      \
+                "\"RxQual\":%d}, "                  \
+            "\"CellInfo\":{"                        \
+                "\"LogicalCellID\":\"0x%08x\", "    \
+                "\"PhysicalCellID\":%d, "           \
+                "\"EARFCN\":%d, "                   \
+                "\"PLMN\":%03d%02d, "               \
+                "\"Operator\":\"%s\"}"              \
         "}";
 
         // Checking if some radio parameters are not zero is a good way
@@ -128,7 +130,7 @@ static void measureSignalQuality(void)
 
         snprintf(jsonBuffer, JSON_STRING_LENGTH, format, timestamp, 
                                 rsrp, rsrq, rssi, snr, rxqual, 
-                                cellId, earfcn, operatorMcc, operatorMnc, pOperatorName);
+                                logicalCellId, physicalCellId, earfcn, operatorMcc, operatorMnc, pOperatorName);
         sendMQTTMessage(topicName, jsonBuffer, U_MQTT_QOS_AT_MOST_ONCE, false);
         writeAlways(jsonBuffer);
     } else {
