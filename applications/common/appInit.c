@@ -354,6 +354,19 @@ static void dwellAppLoop(void)
     printDebug("*** Application Tick ***\n");
 }
 
+static void checkHeapInfo(void)
+{
+    uPortLogOn();
+    printf("\n\n\nChecking for unfreed mallocs...\n");
+    int32_t mallocs = uPortHeapDump(NULL);
+    if (mallocs > 0) 
+        printf("\n\n\nWARNING: Still have mallocs left!...\n");
+    else
+        printf("Mallocs are all freed.\n");
+
+    uPortLogOff();
+}
+
 /* ----------------------------------------------------------------
  * PUBLIC FUNCTIONS
  * -------------------------------------------------------------- */
@@ -455,6 +468,11 @@ void finalize(applicationStates_t appState)
     uPortDeinit();
 
     SET_NO_LEDS;
+
+    #ifdef U_CFG_HEAP_MONITOR
+    checkHeapInfo();
+    #endif
+
     printf("\n\n\nXPLR App has finished. Press button #1 to display log...");
 
     displayLogLoop();

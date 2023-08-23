@@ -52,6 +52,16 @@
 #define LOGGING_LEVEL eINFO            // taken from logLevels_t
 
 /* ----------------------------------------------------------------
+ * Enable Heap Monitoring - This will display how many mallocs are 
+ *                          left unfreed at the closing of the 
+ *                          application. 
+ *                          (This costs memory)
+ * 
+ *                          Comment out to remove heap monitoring
+ * -------------------------------------------------------------- */
+#define U_CFG_HEAP_MONITOR 1
+
+/* ----------------------------------------------------------------
  * APN SELECTION
  *
  * THINGSTREAM SIMS:-

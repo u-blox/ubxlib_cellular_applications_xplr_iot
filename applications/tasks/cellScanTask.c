@@ -46,8 +46,6 @@ static taskConfig_t *taskConfig = NULL;
 /* ----------------------------------------------------------------
  * STATIC VARIABLES
  * -------------------------------------------------------------- */
-static applicationStates_t tempAppStatus;
-
 static bool stopCellScan = false;
 
 static char topicName[MAX_TOPIC_NAME_SIZE];

@@ -182,7 +182,7 @@ void closeLogFile(bool displayWarning)
     MUTEX_UNLOCK
     
     if (displayWarning)
-        printf("\nLog file is now closed.\n");
+        printf("Log file is now closed.\n");
 }
 
 void displayLogFile(void)
