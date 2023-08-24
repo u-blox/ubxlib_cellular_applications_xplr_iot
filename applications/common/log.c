@@ -40,6 +40,8 @@
 
 #define FILE_READ_BUFFER 100
 
+#define FLUSH_TIMER_SECONDS 60
+
 /* ----------------------------------------------------------------
  * STATIC VARIABLES
  * -------------------------------------------------------------- */
@@ -50,6 +52,7 @@ static struct fs_file_t logFile;
 static bool logFileOpen = false;
 
 static uPortMutexHandle_t pLogMutex = NULL;
+static uPortTimerHandle_t pFlushTimerHandle = NULL;
 
 static logLevels_t gLogLevel = eINFO;
 
@@ -102,6 +105,31 @@ static bool printHeader(logLevels_t level, bool writeToFile)
         fs_write(&logFile, header, strlen(header));
 
     return true;
+}
+
+static void flushTimerCallback(void *callbackHandle, void *param)
+{
+    MUTEX_LOCK
+        printDebug("Flushing file system... ");
+        fs_sync(&logFile);
+        printDebug("Done\n");
+    MUTEX_UNLOCK
+}
+
+static void startFlushTimer()
+{
+    if (logFileOpen) {
+        int32_t errorCode = uPortTimerCreate(&pFlushTimerHandle, NULL, flushTimerCallback, NULL, FLUSH_TIMER_SECONDS * 1000, true);
+        if (errorCode < 0) {
+            printWarn("Failed to create the log file flushing timer: %d", errorCode);
+        } else {
+            errorCode = uPortTimerStart(pFlushTimerHandle);
+            if (errorCode == 0)
+                printInfo("Started log file flushing.... every %d seconds", FLUSH_TIMER_SECONDS);
+            else
+                printWarn("Failed to start the log file flushing: %d", errorCode);
+        }
+    }
 }
 
 /* ----------------------------------------------------------------
@@ -178,6 +206,9 @@ void closeLogFile(bool displayWarning)
 
         logFileOpen = false;
         fs_close(&logFile);
+
+        if (pFlushTimerHandle != NULL)
+            uPortTimerStop(pFlushTimerHandle);
     
     MUTEX_UNLOCK
     
@@ -236,11 +267,12 @@ void startLogging(const char *pFilename) {
             printLog("File logging enabled");
             logFileOpen = true;
         } else {
-            printLog("* Failed to open log file: %d", result);
+            printError("Failed to open log file: %d\n Logging to the log file will not be available.", result);
         }
     } else {
-        printLog("* Failed to create the log mutex: %d", errorCode);
-        printLog("Logging to the file will not be available.");
+        printError("Failed to create the log mutex: %d\n Logging to the log file will not be available.", errorCode);
         pLogMutex = NULL;
     }
+
+    startFlushTimer();
 }
