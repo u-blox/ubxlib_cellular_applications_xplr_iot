@@ -34,8 +34,6 @@ typedef enum {
 /* ----------------------------------------------------------------
  * DEFINES
  * -------------------------------------------------------------- */
-//#define UBXLIB_LOGGING_ON       // comment out for no ubxlib logging
-
 #define STARTUP_DELAY 250       // 250 * 20ms => 5 seconds
 #define LOG_FILENAME "log.csv"
 #define MQTT_CREDENTIALS_FILENAME "mqttCredentials.txt"
@@ -97,8 +95,8 @@ static buttonNumber_t checkStartButton(void)
 {
     SET_RED_LED;
 
-    // just wait 3 seconds for any terminal to be connected
-    uPortTaskBlock(3000);
+    // Wait 5 seconds for any terminal to be connected
+    uPortTaskBlock(STARTUP_DELAY);
 
     printLog("Button #1 = Display Log file");
     printLog("Button #2 = Delete  Log File");
@@ -202,32 +200,14 @@ static void displayLogLoop(void)
     }
 }
 
-/// @brief Reads the serial number from the module
-/// @return The length of the serial number, or negative on error
-static int32_t getSerialNumber(void)
-{
-    int32_t len = uSecurityGetSerialNumber(gDeviceHandle, gSerialNumber);
-    if (len > 0) {
-        if (gSerialNumber[0] == '"') {
-            // Remove quotes
-            memmove(gSerialNumber, gSerialNumber + 1, len);
-            gSerialNumber[len - 2] = 0;
-        }
-
-        writeLog("Cellular Module Serial Number: %s", gSerialNumber);
-    }
-
-    return len;
-}
-
 /// @brief Initiate the UBXLIX API
 static int32_t initCellularDevice(void)
 {
     int32_t errorCode;
 
-    // turn off the UBXLIB printLog() logging
+    // turn off the UBXLIB printLog() logging as it is enabled by default (?!)
     #ifndef UBXLIB_LOGGING_ON
-    uPortLogOff();
+        uPortLogOff();
     #endif
 
     writeLog("Initiating the UBXLIB Device API...");

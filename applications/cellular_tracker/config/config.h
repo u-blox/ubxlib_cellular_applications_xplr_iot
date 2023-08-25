@@ -45,11 +45,19 @@
 #define APP_VERSION "v1.1ENG"
 
 /* ----------------------------------------------------------------
- * DEBUG LEVEL SETTING - This can be changed remotely using
- *                       "SET_LOG_LEVEL" command via the
- *                        APP_CONTROL MQTT topic
+ * APPLICATION DEBUG LEVEL SETTING 
+ *                          This can be changed remotely using
+ *                          "SET_LOG_LEVEL" command via the
+ *                          APP_CONTROL MQTT topic
  * -------------------------------------------------------------- */
 #define LOGGING_LEVEL eINFO            // taken from logLevels_t
+
+/* ----------------------------------------------------------------
+ * UBXLIB DEBUG LOGGING     Uncomment this line to enable the 
+ *                          ubxlib logging system
+ * 
+ * -------------------------------------------------------------- */
+//#define UBXLIB_LOGGING_ON
 
 /* ----------------------------------------------------------------
  * Enable Heap Monitoring - This will display how many mallocs are 
