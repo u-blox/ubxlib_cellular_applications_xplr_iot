@@ -246,13 +246,8 @@ static int32_t initCellularDevice(void)
         return errorCode;
     }
 
-    // get serial number
-    errorCode = getSerialNumber();
-    if (errorCode < 0) {
-        writeFatal("* Failed to get the serial number of the module: %d", errorCode);
-        return errorCode;
-    }
-
+    displayCellularModuleInfo();
+    
     return configureCellularModule();
 }
 

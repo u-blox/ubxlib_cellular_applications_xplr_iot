@@ -18,6 +18,15 @@
 #include "config.h"
 #include "cellInit.h"
 
+/* ----------------------------------------------------------------
+ * DEFINES
+ * -------------------------------------------------------------- */
+#define INFO_BUFFER_SIZE 50
+
+/* ----------------------------------------------------------------
+ * STATIC FUNCTIONS
+ * -------------------------------------------------------------- */
+
 static int32_t checkReboot(void)
 {
     if(uCellPwrRebootIsRequired(gDeviceHandle))
@@ -59,6 +68,9 @@ static int32_t configureRAT(void)
     return checkReboot();
 }
 
+/* ----------------------------------------------------------------
+ * PUBLIC FUNCTIONS
+ * -------------------------------------------------------------- */
 int32_t configureCellularModule(void)
 {
     writeInfo("Configuring the cellular module...");
@@ -68,4 +80,49 @@ int32_t configureCellularModule(void)
         errorCode = configureRAT();
 
     return errorCode;
+}
+
+/// @brief Display the cellular module's information 
+void displayCellularModuleInfo(void)
+{
+    char buffer[INFO_BUFFER_SIZE];
+    
+    // getIMxI functions return fixed chars, not a null terminated string (!)
+    char imsi[U_CELL_INFO_IMSI_SIZE+1];
+    char imei[U_CELL_INFO_IMEI_SIZE+1];
+    imei[sizeof(imei)-1] = 0;
+    imsi[sizeof(imsi)-1] = 0;
+
+    int32_t count;
+    int32_t errorCode;
+
+    count = uCellInfoGetManufacturerStr(gDeviceHandle, buffer, INFO_BUFFER_SIZE);
+    if (count > 0)
+        writeInfo("Cellular Module Manufacturer: %s", buffer);
+    else
+        writeWarn("Cellular Module Manufacturer: Failed to get");
+
+    count = uCellInfoGetModelStr(gDeviceHandle, buffer, INFO_BUFFER_SIZE);
+    if (count > 0)
+        writeInfo("Cellular Module Model: %s", buffer);
+    else
+        writeWarn("Cellular Module Model: Failed to get");
+
+    count = uCellInfoGetFirmwareVersionStr(gDeviceHandle, buffer, INFO_BUFFER_SIZE);
+    if (count > 0)
+        writeInfo("Cellular Module Firmware: %s", buffer);
+    else
+        writeWarn("Cellular Module Firmware: Failed to get");
+    
+    errorCode = uCellInfoGetImei(gDeviceHandle, imei);
+    if (errorCode == 0)
+        writeInfo("Cellular Module IMEI: %s", imei);
+    else
+        writeWarn("Cellular Module IMEI: Failed to get: %d", errorCode);
+    
+    errorCode = uCellInfoGetImsi(gDeviceHandle, imsi);
+    if (errorCode == 0)
+        writeInfo("Cellular Module IMSI: %s", imsi);
+    else
+        writeWarn("Cellular Module IMSI: Failed to get: %d", errorCode);
 }

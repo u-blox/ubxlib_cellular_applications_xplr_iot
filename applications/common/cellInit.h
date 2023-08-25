@@ -18,5 +18,6 @@
 #define _CELLINIT_H_
 
 int32_t configureCellularModule(void);
+void displayCellularModuleInfo(void);
 
 #endif
