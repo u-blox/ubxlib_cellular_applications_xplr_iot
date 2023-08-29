@@ -440,6 +440,9 @@ void finalize(applicationStates_t appState)
     writeLog("Application Finished.");
 
     closeLogFile(true);
+
+    uDeviceClose(gDeviceHandle, true);
+    uDeviceDeinit();
     uPortDeinit();
 
     SET_NO_LEDS;
