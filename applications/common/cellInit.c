@@ -24,6 +24,12 @@
 #define INFO_BUFFER_SIZE 50
 
 /* ----------------------------------------------------------------
+ * GLOBAL VARIABLES
+ * -------------------------------------------------------------- */
+// serial number of the module
+char gSerialNumber[U_CELL_INFO_IMEI_SIZE+1];
+
+/* ----------------------------------------------------------------
  * STATIC FUNCTIONS
  * -------------------------------------------------------------- */
 
@@ -88,9 +94,7 @@ void displayCellularModuleInfo(void)
     char buffer[INFO_BUFFER_SIZE];
     
     // getIMxI functions return fixed chars, not a null terminated string (!)
-    char imsi[U_CELL_INFO_IMSI_SIZE+1];
-    char imei[U_CELL_INFO_IMEI_SIZE+1];
-    imei[sizeof(imei)-1] = 0;
+    char imsi[U_CELL_INFO_IMSI_SIZE+1];    
     imsi[sizeof(imsi)-1] = 0;
 
     int32_t count;
@@ -114,9 +118,10 @@ void displayCellularModuleInfo(void)
     else
         writeWarn("Cellular Module Firmware: Failed to get");
     
-    errorCode = uCellInfoGetImei(gDeviceHandle, imei);
+    gSerialNumber[sizeof(gSerialNumber)-1] = 0;
+    errorCode = uCellInfoGetImei(gDeviceHandle, gSerialNumber);
     if (errorCode == 0)
-        writeInfo("Cellular Module IMEI: %s", imei);
+        writeInfo("Cellular Module IMEI: %s", gSerialNumber);
     else
         writeWarn("Cellular Module IMEI: Failed to get: %d", errorCode);
     

@@ -67,9 +67,6 @@ static bool appFinalized = false;
 /* ----------------------------------------------------------------
  * GLOBAL VARIABLES
  * -------------------------------------------------------------- */
-// serial number of the module
-char gSerialNumber[U_SECURITY_SERIAL_NUMBER_MAX_LENGTH_BYTES];
-
 applicationStates_t gAppStatus = MANUAL;
 
 // deviceHandle is not static as this is shared between other modules.

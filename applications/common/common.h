@@ -111,7 +111,7 @@ typedef struct {
  * -------------------------------------------------------------- */
 
 // serial number of the cellular module
-extern char gSerialNumber[U_SECURITY_SERIAL_NUMBER_MAX_LENGTH_BYTES];
+extern char gSerialNumber[U_CELL_INFO_IMEI_SIZE+1];
 
 // This is the ubxlib deviceHandle for communicating with the celullar module
 extern uDeviceHandle_t gDeviceHandle;
