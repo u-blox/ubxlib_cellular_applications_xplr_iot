@@ -67,7 +67,7 @@
  * 
  *                          Comment out to remove heap monitoring
  * -------------------------------------------------------------- */
-#define U_CFG_HEAP_MONITOR 1
+#define U_CFG_HEAP_MONITOR
 
 /* ----------------------------------------------------------------
  * APN SELECTION
@@ -85,8 +85,8 @@
  *      queries are not available, like the NTP service on TSUDP APN.
  *      Edit this list for other APNs which are restricted/limited.
  * -------------------------------------------------------------- */
-#define APN "TSUDP"     // Thingstream MQTT-Anywhere
-//#define APN "TSIOT"     // Thingstream SIM other brokers
+//#define APN "TSUDP"     // Thingstream MQTT-Anywhere
+#define APN "TSIOT"     // Thingstream SIM other brokers
 //#define APN ""          // Blank - network provided APN
 
 /* ----------------------------------------------------------------
@@ -102,14 +102,16 @@
 // *** Load credentials from file system ONLY ***
 //#define MQTT_FILE_SYSTEM
 
-// *** Thingstream MQTT Services - remember to set TSUDP as the APN for MQTT-ANYWHERE
-#define MQTT_THINGSTREAM_ANYWHERE
+// *** Thingstream MQTT-SN Services - remember to set TSUDP as the APN for MQTT-ANYWHERE
+//#define MQTT_THINGSTREAM_ANYWHERE
 //#define MQTT_THINGSTREAM_FLEX
+
+// *** Thingstream MQTT Services - remember to set TSUDP as the APN for MQTT-ANYWHERE
 //#define MQTT_THINGSTREAM_NOW_NoTLS_Auth
 //#define MQTT_THINGSTREAM_NOW_TLS_Auth
 
 // *** Mosquitto MQTT Test Service
-//#define MQTT_MOSQUITTO_NoTLS_NoAuth
+#define MQTT_MOSQUITTO_NoTLS_NoAuth
 //#define MQTT_MOSQUITTO_NoTLS_Auth
 //#define MQTT_MOSQUITTO_TLS_Cert
 //#define MQTT_MOSQUITTO_TLS_Auth

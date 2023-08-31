@@ -42,6 +42,8 @@
 
 #define TASK_INITIALISED        ((taskConfig != NULL) && taskConfig->initialised)
 
+#define TASK_IS_RUNNING         isMutexLocked(TASK_MUTEX)
+
 #define CREATE_TOPIC_NAME       snprintf(topicName, MAX_TOPIC_NAME_SIZE, "%s/%s", (const char *)gSerialNumber, TASK_NAME)
 
 #define EXIT_IF_CANT_RUN_TASK   if (taskConfig == NULL || !TASK_INITIALISED) {                          \

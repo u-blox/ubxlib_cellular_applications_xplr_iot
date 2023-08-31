@@ -206,7 +206,7 @@ static int32_t initQueue()
 int32_t queueNetworkScan(commandParamsList_t *params)
 {
     cellScanMsg_t qMsg;
-    if (isMutexLocked(TASK_MUTEX)) {
+    if (TASK_IS_RUNNING) {
         writeLog("Cell Scan is already in progress, cancelling...");
         qMsg.msgType = STOP_CELL_SCAN;
     } else {

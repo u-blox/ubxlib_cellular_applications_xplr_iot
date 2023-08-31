@@ -93,7 +93,7 @@ static buttonNumber_t checkStartButton(void)
     SET_RED_LED;
 
     // Wait 5 seconds for any terminal to be connected
-    uPortTaskBlock(STARTUP_DELAY);
+    uPortTaskBlock(20 * STARTUP_DELAY);
 
     printLog("Button #1 = Display Log file");
     printLog("Button #2 = Delete  Log File");
