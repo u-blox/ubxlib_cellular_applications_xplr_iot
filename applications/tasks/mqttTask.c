@@ -97,6 +97,8 @@ static int32_t lastMQTTError = 0;
 /// @brief Simple flag to exit any dwelling to connect to the broker
 static bool tryToConnectMQTT = false;
 
+bool gIsMQTTConnected = false;
+
 /* ----------------------------------------------------------------
  * STATIC FUNCTION DEFINES
  * -------------------------------------------------------------- */
@@ -194,6 +196,7 @@ static void queueHandler(void *pParam, size_t paramLengthBytes)
 static void disconnectCallback(int32_t lastMqttError, void *param)
 {
     gAppStatus = MQTT_DISCONNECTED;
+    gIsMQTTConnected = false;
 
     // don't bother worrying about the last mqtt error - we're disconnected now!
 }
@@ -241,6 +244,7 @@ static int32_t connectBroker(void)
     }
 
     writeLog("Connected to %s", MQTT_TYPE_NAME);
+    gIsMQTTConnected = true;
     gAppStatus = MQTT_CONNECTED;
 
     return 0;
@@ -414,7 +418,7 @@ static void taskLoop(void *pParameters)
     {
         if (!uMqttClientIsConnected(pContext)) {
             gAppStatus = MQTT_DISCONNECTED;
-            if (IS_NETWORK_AVAILABLE) {
+            if (gIsNetworkUp) {
                 writeLog("MQTT client disconnected, trying to connect...");
                 if (connectBroker() != U_ERROR_COMMON_SUCCESS) {
                     uPortTaskBlock(5000);
@@ -436,6 +440,8 @@ static void taskLoop(void *pParameters)
             dwellTask(taskConfig, continueToDwell);
         }
     }
+
+    printf("MQTT Task Loop Finished!\n");
 
     // Application exiting, so disconnect from MQTT broker/SN gateway...
     disconnectBroker();

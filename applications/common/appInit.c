@@ -474,7 +474,7 @@ bool startupFramework(void)
         finalize(ERROR);
     }
 
-    errorCode = runTask(LED_TASK);
+    errorCode = runTask(LED_TASK, NULL);
     if (errorCode != 0) {
         writeFatal("* Failed to start LED task - not running application!");
         finalize(ERROR);

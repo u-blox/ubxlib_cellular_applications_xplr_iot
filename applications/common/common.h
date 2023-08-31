@@ -128,6 +128,9 @@ extern bool gIsNetworkUp;
 // This flag represents the module can hear the network signaling (RSRP != 0)
 extern bool gIsNetworkSignalValid;
 
+// This flag represents the MQTT Client is connected to the broker or SN gateway
+extern bool gIsMQTTConnected;
+
 // application status
 extern applicationStates_t gAppStatus;
 
@@ -151,5 +154,7 @@ int32_t getParamValue(commandParamsList_t *params, size_t index, int32_t minValu
 void getTimeStamp(char *timeStamp);
 
 void runTaskAndDelete(void *pParams);
+
+bool waitFor(bool (*checkFunction)(void));
 
 #endif

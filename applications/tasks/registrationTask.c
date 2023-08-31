@@ -79,7 +79,7 @@ static const char *restrictredAPNs[] = {
  * PUBLIC VARIABLES
  * -------------------------------------------------------------- */
 
-// This flag represents the network's registration status
+// This flag represents the network's registration is either HOME or ROAMING (connected!)
 bool gIsNetworkUp = false;
 
 /// The unix network time, which is retrieved after first registration

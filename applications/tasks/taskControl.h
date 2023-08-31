@@ -147,7 +147,7 @@ typedef struct TaskRunner {
 int32_t initTasks();
 int32_t initSingleTask(taskTypeId_t id);
 
-int32_t runTask(taskTypeId_t id);
+int32_t runTask(taskTypeId_t id, bool (*waitForFunc)(void));
 
 void dwellTask(taskConfig_t *taskConfig, bool (*exitFunc)(void));
 

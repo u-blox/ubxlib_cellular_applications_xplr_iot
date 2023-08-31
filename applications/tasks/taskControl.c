@@ -209,7 +209,7 @@ int32_t initTasks()
     return errorCode;
 }
 
-int32_t runTask(taskTypeId_t id)
+int32_t runTask(taskTypeId_t id, bool (*waitForFunc)(void))
 {
     if (gExitApp) return -1;
 
@@ -224,6 +224,9 @@ int32_t runTask(taskTypeId_t id)
     if (errorCode < 0) {
         printError("Failed to start task %s, error: %d", runner->config.name, errorCode);
     }
+
+    if (waitForFunc != NULL)
+        waitFor(waitForFunc);
 
     return errorCode;
 }
