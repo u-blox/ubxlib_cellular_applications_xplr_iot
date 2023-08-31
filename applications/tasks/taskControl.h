@@ -147,6 +147,10 @@ typedef struct TaskRunner {
 int32_t initTasks();
 int32_t initSingleTask(taskTypeId_t id);
 
+/// @brief Runs a appTask from it's start function in its taskConfig
+/// @param id The ID of the appTask to start
+/// @param waitForFunc A function which returns when the function should continue
+/// @return 0 if successful, or negative for failure.
 int32_t runTask(taskTypeId_t id, bool (*waitForFunc)(void));
 
 void dwellTask(taskConfig_t *taskConfig, bool (*exitFunc)(void));

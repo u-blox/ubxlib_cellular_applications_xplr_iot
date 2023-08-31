@@ -211,24 +211,24 @@ int32_t initTasks()
 
 int32_t runTask(taskTypeId_t id, bool (*waitForFunc)(void))
 {
-    if (gExitApp) return -1;
+    if (gExitApp) return U_ERROR_COMMON_CANCELLED;
 
     taskRunner_t *runner = getTaskRunner(id);
     if (runner == NULL) {
         printError("Failed to get task runner for task ID #%d, not running task", id);
-        gExitApp = true;
-        return -1;
+        return U_ERROR_COMMON_UNKNOWN;
     }
 
     int32_t errorCode = runner->startFunc(NULL);
     if (errorCode < 0) {
         printError("Failed to start task %s, error: %d", runner->config.name, errorCode);
+        return errorCode;
     }
 
-    if (waitForFunc != NULL)
-        waitFor(waitForFunc);
+    if (waitForFunc != NULL && !waitFor(waitForFunc))
+        return U_ERROR_COMMON_UNKNOWN; 
 
-    return errorCode;
+    return U_ERROR_COMMON_SUCCESS;
 }
 
 /// @brief Waits for a period of time and exits if the task is requested to exit/stop

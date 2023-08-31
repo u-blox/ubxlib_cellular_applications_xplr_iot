@@ -136,11 +136,6 @@ static void button_pressed(int buttonNo, uint32_t holdTime)
         pressedButton = buttonNo;
     } else {
         pressedButton = NO_BUTTON; 
-    
-        // The application framework will enable the 'app' buttons,
-        // exit handling the buttons if this is not enabled yet.
-        if (!buttonCommandEnabled)
-            return;
 
         switch (buttonNo) {
             // EXIT APPLICATION 
@@ -151,11 +146,11 @@ static void button_pressed(int buttonNo, uint32_t holdTime)
 
             // BUTTON #2 action is set by the application via setButtonTwoFunction()
             case BUTTON_2:                
-                if (buttonTwoFunc != NULL) {
+                if (buttonTwoFunc != NULL && buttonCommandEnabled) {
                     writeLog("Button #2 pressed");
                     buttonTwoFunc();
                 } else {
-                    printDebug("No function defined for Button #2");
+                    printDebug("Button #2 function not enabled");
                 }
                 break;
 
