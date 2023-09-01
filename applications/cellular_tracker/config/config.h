@@ -108,7 +108,7 @@
 //#define MQTT_THINGSTREAM_ANYWHERE
 //#define MQTT_THINGSTREAM_FLEX
 
-// *** Thingstream MQTT Services - remember to set TSUDP as the APN for MQTT-ANYWHERE
+// *** Thingstream MQTT Services - remember to NOT use TSUDP for the APN for these
 //#define MQTT_THINGSTREAM_NOW_NoTLS_Auth
 //#define MQTT_THINGSTREAM_NOW_TLS_Auth
 
