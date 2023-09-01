@@ -46,8 +46,6 @@ static taskConfig_t *taskConfig = NULL;
 /* ----------------------------------------------------------------
  * STATIC VARIABLES
  * -------------------------------------------------------------- */
-static applicationStates_t tempAppStatus;
-
 static bool stopCellScan = false;
 
 static char topicName[MAX_TOPIC_NAME_SIZE];
@@ -95,7 +93,8 @@ static void doCellScan(void *pParams)
     uCellNetRat_t rat = U_CELL_NET_RAT_UNKNOWN_OR_NOT_USED;
 
     U_PORT_MUTEX_LOCK(TASK_MUTEX);
-    SET_APP_STATUS(COPS_QUERY);
+    applicationStates_t tempStatus = gAppStatus;
+    gAppStatus = COPS_QUERY;
     
     pauseMainLoop(true);
 
@@ -139,12 +138,11 @@ static void doCellScan(void *pParams)
 
     writeInfo(payload);
 
-    // reset the stop cell scan indicator
+    // reset the flags etc
     stopCellScan = false;
-
+    gAppStatus = tempStatus;
     pauseMainLoop(false);
 
-    REVERT_APP_STATUS();
     U_PORT_MUTEX_UNLOCK(TASK_MUTEX);
 }
 
@@ -208,7 +206,7 @@ static int32_t initQueue()
 int32_t queueNetworkScan(commandParamsList_t *params)
 {
     cellScanMsg_t qMsg;
-    if (isMutexLocked(TASK_MUTEX)) {
+    if (TASK_IS_RUNNING) {
         writeLog("Cell Scan is already in progress, cancelling...");
         qMsg.msgType = STOP_CELL_SCAN;
     } else {
@@ -253,4 +251,9 @@ int32_t startCellScanTaskLoop(commandParamsList_t *params)
 int32_t stopCellScanTask(commandParamsList_t *params)
 {
     STOP_TASK;
+}
+
+int32_t finalizeCellScanTask(void)
+{
+    return U_ERROR_COMMON_SUCCESS;
 }

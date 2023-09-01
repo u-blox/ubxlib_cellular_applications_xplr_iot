@@ -56,7 +56,6 @@ static taskConfig_t *taskConfig = NULL;
 /* ----------------------------------------------------------------
  * STATIC VARIABLES
  * -------------------------------------------------------------- */
- static applicationStates_t tempAppStatus;
 static char topicName[MAX_TOPIC_NAME_SIZE];
 
 /// callback commands for incoming MQTT control messages
@@ -83,11 +82,15 @@ static void measureSignalQuality(void)
 {
     int32_t errorCode;
 
+    if (!gIsNetworkUp) {
+        printDebug("measureSignalQuality(): Network is not attached.");
+        return;
+    }
+
     U_PORT_MUTEX_LOCK(TASK_MUTEX);
 
     printDebug("Fetching signal quality measurements...");
-
-    SET_APP_STATUS(START_SIGNAL_QUALITY);
+    gAppStatus = START_SIGNAL_QUALITY;
 
     char timestamp[TIMESTAMP_MAX_LENTH_BYTES];
     getTimeStamp(timestamp);
@@ -100,38 +103,43 @@ static void measureSignalQuality(void)
         int32_t rxqual = uCellInfoGetRxQual(gDeviceHandle);
         int32_t snr;
         uCellInfoGetSnrDb(gDeviceHandle, &snr);
-        int32_t cellId = uCellInfoGetCellId(gDeviceHandle);
+        int32_t logicalCellId = uCellInfoGetCellIdLogical(gDeviceHandle);
+        int32_t physicalCellId = uCellInfoGetCellIdPhysical(gDeviceHandle);
         int32_t earfcn = uCellInfoGetEarfcn(gDeviceHandle);
 
         char format[] = "{" \
-            "\"Timestamp\":\"%s\", "        \
-            "\"CellQuality\":{"             \
-                "\"RSRP\":\"%d\", "         \
-                "\"RSRQ\":\"%d\", "         \
-                "\"RSSI\":\"%d\", "         \
-                "\"SNR\":\"%d\", "          \
-                "\"RxQual\":\"%d\", "       \   
-                "\"CellID\":\"%d\", "       \
-                "\"EARFCN\":\"%d\", "       \
-                "\"PLMN\":\"%03d%02d\", "   \                
-                "\"Operator\":\"%s\"}"      \
+            "\"Timestamp\":\"%s\", "                \
+            "\"CellQuality\":{"                     \
+                "\"RSRP\":%d, "                     \
+                "\"RSRQ\":%d, "                     \
+                "\"RSSI\":%d, "                     \
+                "\"SNR\":%d, "                      \
+                "\"RxQual\":%d}, "                  \
+            "\"CellInfo\":{"                        \
+                "\"LogicalCellID\":\"0x%08x\", "    \
+                "\"PhysicalCellID\":%d, "           \
+                "\"EARFCN\":%d, "                   \
+                "\"PLMN\":%03d%02d, "               \
+                "\"Operator\":\"%s\"}"              \
         "}";
 
-        // Checking if RSRP is not zero is a great way to
-        // determine if the network is visable and useable.
-        // See marcro "IS_NETWORK_AVAILABLE"
-        gIsNetworkSignalValid = (rsrp != 0);
+        // Checking if some radio parameters are not zero is a good way
+        // to determine if the network is visible and useable.
+        // See macro "IS_NETWORK_AVAILABLE"
+        gIsNetworkSignalValid = (rsrp != 0) && (rsrq != 2147483647) && (rssi != 0);
 
         snprintf(jsonBuffer, JSON_STRING_LENGTH, format, timestamp, 
                                 rsrp, rsrq, rssi, snr, rxqual, 
-                                cellId, earfcn, operatorMcc, operatorMnc, pOperatorName);
+                                logicalCellId, physicalCellId, earfcn, operatorMcc, operatorMnc, pOperatorName);
         sendMQTTMessage(topicName, jsonBuffer, U_MQTT_QOS_AT_MOST_ONCE, false);
         writeAlways(jsonBuffer);
     } else {
-        writeWarn("Failed to read Radio Parameters %d", errorCode);
+        if (errorCode == U_CELL_ERROR_NOT_REGISTERED) {
+            writeDebug("SignalQualityTask: Not registered");
+        } else {
+            writeWarn("Failed to read Radio Parameters %d", errorCode);
+        }
     }
-
-    REVERT_APP_STATUS();
 
     U_PORT_MUTEX_UNLOCK(TASK_MUTEX);
 }
@@ -243,4 +251,9 @@ int32_t startSignalQualityTaskLoop(commandParamsList_t *params)
 int32_t stopSignalQualityTaskLoop(commandParamsList_t *params)
 {
     STOP_TASK;
+}
+
+int32_t finalizeSignalQualityTask(void)
+{
+    return U_ERROR_COMMON_SUCCESS;
 }

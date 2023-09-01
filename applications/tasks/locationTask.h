@@ -29,6 +29,7 @@
 int32_t initLocationTask(taskConfig_t *config);
 int32_t startLocationTaskLoop(commandParamsList_t *params);
 int32_t stopLocationTaskLoop(commandParamsList_t *params);
+int32_t finalizeLocationTask(void);
 
 /* ----------------------------------------------------------------
  * PUBLIC TASK FUNCTIONS

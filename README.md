@@ -34,10 +34,10 @@ See [here](applications/tasks) for further information of each `appTask` current
 
 ## Application remote control
 
-Each `appTask` has a `/<IMEI>/<appTaskName>Control` topic where commands can be sent down to that `appTask`. Start, Stop task, measure 'now' etc.
+Each `appTask` has a `<IMEI>/<appTaskName>Control` topic where commands can be sent down to that `appTask`. Start, Stop task, measure 'now' etc.
 
 A typical log output shows what the commands are:
-> Subscribed to callback topic: /351457830026040/SensorControl
+> Subscribed to callback topic: 351457830026040/SensorControl
 >
 > With these commands:
 >
@@ -47,7 +47,7 @@ A typical log output shows what the commands are:
 
 ## Application published data
 
-Each appTask can publish their data/information to the MQTT broker to their own specific topic. This topic is well defined, being `/<IMEI>/<appTaskName>`.
+Each appTask can publish their data/information to the MQTT broker to their own specific topic. This topic is well defined, being `<IMEI>/<appTaskName>`.
 
 This data/information should normally be formatted as JSON.
 

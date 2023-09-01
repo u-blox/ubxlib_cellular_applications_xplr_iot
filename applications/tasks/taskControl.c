@@ -40,35 +40,35 @@ static void setRedLED(void *param);
 
 taskRunner_t taskRunners[] = {
     // Registration - Looks after the cellular registration process
-    {initNetworkRegistrationTask, startNetworkRegistrationTaskLoop, stopNetworkRegistrationTaskLoop, true,
+    {initNetworkRegistrationTask, startNetworkRegistrationTaskLoop, stopNetworkRegistrationTaskLoop, finalizeNetworkRegistrationTask, true,
             {NETWORK_REG_TASK, "Registration", 30, false, BLANK_TASK_HANDLES, setRedLED}},
 
     // CellScan - Performs the +COPS=? Query for seeing what cells are available and publishes the results
-    {initCellScanTask, startCellScanTaskLoop, stopCellScanTask, false,
+    {initCellScanTask, startCellScanTaskLoop, stopCellScanTask, finalizeCellScanTask, false,
             {CELL_SCAN_TASK, "CellScan", -1, false, BLANK_TASK_HANDLES, NULL}},
 
     // MQTT - Handles the MQTT broker connection, publishing messages and handling downlink messages
-    {initMQTTTask, startMQTTTaskLoop, stopMQTTTaskLoop, false,
+    {initMQTTTask, startMQTTTaskLoop, stopMQTTTaskLoop, finalizeMQTTTask, false,
             {MQTT_TASK, "MQTT", 30, false, BLANK_TASK_HANDLES, NULL}},
 
     // SignalQuality - Measures the Signal Quality and other network parameters and publishes the results
-    {initSignalQualityTask, startSignalQualityTaskLoop, stopSignalQualityTaskLoop, false,
+    {initSignalQualityTask, startSignalQualityTaskLoop, stopSignalQualityTaskLoop, finalizeSignalQualityTask, false,
             {SIGNAL_QUALITY_TASK, "SignalQuality", 30, false, BLANK_TASK_HANDLES, NULL}},
 
     // LED - Handles the flashing of the LEDS depending on the AppStatus global variable
-    {initLEDTask, startLEDTaskLoop, stopLEDTaskLoop, false,
+    {initLEDTask, startLEDTaskLoop, stopLEDTaskLoop, finalizeLEDTask, false,
             {LED_TASK, "LED", -1, false, BLANK_TASK_HANDLES, setRedLED}},
 
     // Example - Simple example task that does "nothing"
-    {initExampleTask, startExampleTaskLoop, stopExampleTaskLoop, false,
+    {initExampleTask, startExampleTaskLoop, stopExampleTaskLoop, finalizeExampleTask, false,
             {EXAMPLE_TASK, "Example", 30, false, BLANK_TASK_HANDLES, NULL}},
 
     // Location - Periodically gets the GNSS location of the device and publishes the results
-    {initLocationTask, startLocationTaskLoop, stopLocationTaskLoop, false,
+    {initLocationTask, startLocationTaskLoop, stopLocationTaskLoop, finalizeLocationTask, false,
             {LOCATION_TASK, "Location", 30, false, BLANK_TASK_HANDLES, NULL}},
 
     // Sensor - Measures the sensor parameters and publishes the results
-    {initSensorTask, startSensorTaskLoop, stopSensorTaskLoop, false,
+    {initSensorTask, startSensorTaskLoop, stopSensorTaskLoop, finalizeSensorTask, false,
             {SENSOR_TASK, "Sensor", 30, false, BLANK_TASK_HANDLES, NULL}}
 };
 
@@ -125,6 +125,11 @@ static bool stopTask(taskTypeId_t id)
         return false;
     }
 
+    if (runner->stopFunc == NULL) {
+        writeDebug("Task %s does not have a stop function", runner->config.name);
+        return true;
+    }
+
     int32_t errorCode = runner->stopFunc(NULL);
     if (errorCode != 0) {
         writeFatal("Stopping task %s returned error: %d", runner->config.name, errorCode);
@@ -132,6 +137,23 @@ static bool stopTask(taskTypeId_t id)
     }
 
     return true;
+}
+
+static int32_t finalizeTask(taskTypeId_t id)
+{
+    taskRunner_t *runner = getTaskRunner(id);
+    if (runner == NULL) {
+        printError("Failed to get task runner for task ID #%d, not finalizing task", id);
+        return U_ERROR_COMMON_UNKNOWN;
+    }
+
+    int32_t errorCode = runner->finalizeFunc();
+    if (errorCode < 0) {
+        printError("Failed to finalize task %s, error: %d", runner->config.name, errorCode);
+        return errorCode;
+    }
+
+    return U_ERROR_COMMON_SUCCESS;
 }
 
 /* ----------------------------------------------------------------
@@ -150,7 +172,12 @@ void waitForAllTasksToStop()
 
         for(int i=0; i<NUM_ELEMENTS(taskRunners); i++) {
             taskRunner_t *taskRunner = &taskRunners[i];
-            if (!taskRunner->explicit_stop && isMutexLocked(taskRunner->config.handles.mutexHandle)) {
+            
+            // some tasks need to stopped on their own
+            if (taskRunner->explicit_stop) 
+                continue;
+
+            if (isMutexLocked(taskRunner->config.handles.mutexHandle)) {
                 printDebug("...still waiting for %s task to finish", taskRunner->config.name);
                 stillWaiting = true;
             }
@@ -209,20 +236,43 @@ int32_t initTasks()
     return errorCode;
 }
 
-int32_t runTask(taskTypeId_t id)
+int32_t runTask(taskTypeId_t id, bool (*waitForFunc)(void))
 {
-    if (gExitApp) return -1;
+    if (gExitApp) return U_ERROR_COMMON_CANCELLED;
 
     taskRunner_t *runner = getTaskRunner(id);
     if (runner == NULL) {
         printError("Failed to get task runner for task ID #%d, not running task", id);
-        gExitApp = true;
-        return -1;
+        return U_ERROR_COMMON_UNKNOWN;
     }
 
     int32_t errorCode = runner->startFunc(NULL);
     if (errorCode < 0) {
         printError("Failed to start task %s, error: %d", runner->config.name, errorCode);
+        return errorCode;
+    }
+
+    if (waitForFunc != NULL)
+        if (!waitFor(waitForFunc)) {
+            printError("Failed to waiting for task!");
+            return U_ERROR_COMMON_UNKNOWN;
+        } 
+
+    return U_ERROR_COMMON_SUCCESS;
+}
+
+int32_t finalizeAllTasks()
+{
+    int32_t errorCode = U_ERROR_COMMON_SUCCESS;
+    taskRunner_t *runner = taskRunners;
+
+    writeInfo("Finalizing all the tasks...");
+    for(int i=0; i<NUM_ELEMENTS(taskRunners); i++) {
+        errorCode = finalizeTask(runner->config.id);
+        if (errorCode < 0)
+            break;
+
+        runner++;
     }
 
     return errorCode;

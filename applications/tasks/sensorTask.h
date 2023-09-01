@@ -29,6 +29,7 @@
 int32_t initSensorTask(taskConfig_t *config);
 int32_t startSensorTaskLoop(commandParamsList_t *params);
 int32_t stopSensorTaskLoop(commandParamsList_t *params);
+int32_t finalizeSensorTask(void);
 
 /* ----------------------------------------------------------------
  * PUBLIC TASK FUNCTIONS

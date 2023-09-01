@@ -22,6 +22,8 @@
 #include "leds.h"
 #include "buttons.h"
 
+#include "u_mutex_debug.h"
+
 /* ----------------------------------------------------------------
  * TYPE DEFINITIONS
  * -------------------------------------------------------------- */
@@ -34,8 +36,6 @@ typedef enum {
 /* ----------------------------------------------------------------
  * DEFINES
  * -------------------------------------------------------------- */
-//#define UBXLIB_LOGGING_ON       // comment out for no ubxlib logging
-
 #define STARTUP_DELAY 250       // 250 * 20ms => 5 seconds
 #define LOG_FILENAME "log.csv"
 #define MQTT_CREDENTIALS_FILENAME "mqttCredentials.txt"
@@ -69,9 +69,6 @@ static bool appFinalized = false;
 /* ----------------------------------------------------------------
  * GLOBAL VARIABLES
  * -------------------------------------------------------------- */
-// serial number of the module
-char gSerialNumber[U_SECURITY_SERIAL_NUMBER_MAX_LENGTH_BYTES];
-
 applicationStates_t gAppStatus = MANUAL;
 
 // deviceHandle is not static as this is shared between other modules.
@@ -97,8 +94,8 @@ static buttonNumber_t checkStartButton(void)
 {
     SET_RED_LED;
 
-    // just wait 3 seconds for any terminal to be connected
-    uPortTaskBlock(3000);
+    // Wait 5 seconds for any terminal to be connected
+    uPortTaskBlock(20 * STARTUP_DELAY);
 
     printLog("Button #1 = Display Log file");
     printLog("Button #2 = Delete  Log File");
@@ -141,26 +138,21 @@ static void button_pressed(int buttonNo, uint32_t holdTime)
         pressedButton = buttonNo;
     } else {
         pressedButton = NO_BUTTON; 
-    
-        // The application framework will enable the 'app' buttons,
-        // exit handling the buttons if this is not enabled yet.
-        if (!buttonCommandEnabled)
-            return;
 
         switch (buttonNo) {
             // EXIT APPLICATION 
             case BUTTON_1:
-                writeLog("Exit button pressed, closing down... Please wait for the RED LED to go out...");
+                writeWarn("Exit button pressed, closing down... Please wait for the RED LED to go out...");
                 gExitApp = true;
                 break;
 
             // BUTTON #2 action is set by the application via setButtonTwoFunction()
             case BUTTON_2:                
-                if (buttonTwoFunc != NULL) {
+                if (buttonTwoFunc != NULL && buttonCommandEnabled) {
                     writeLog("Button #2 pressed");
                     buttonTwoFunc();
                 } else {
-                    printDebug("No function defined for Button #2");
+                    printDebug("Button #2 function not enabled");
                 }
                 break;
 
@@ -202,38 +194,29 @@ static void displayLogLoop(void)
     }
 }
 
-/// @brief Reads the serial number from the module
-/// @return The length of the serial number, or negative on error
-static int32_t getSerialNumber(void)
-{
-    int32_t len = uSecurityGetSerialNumber(gDeviceHandle, gSerialNumber);
-    if (len > 0) {
-        if (gSerialNumber[0] == '"') {
-            // Remove quotes
-            memmove(gSerialNumber, gSerialNumber + 1, len);
-            gSerialNumber[len - 2] = 0;
-        }
-
-        writeLog("Cellular Module Serial Number: %s", gSerialNumber);
-    }
-
-    return len;
-}
-
 /// @brief Initiate the UBXLIX API
 static int32_t initCellularDevice(void)
 {
     int32_t errorCode;
 
-    // turn off the UBXLIB printLog() logging
+    // turn off the UBXLIB printLog() logging as it is enabled by default (?!)
     #ifndef UBXLIB_LOGGING_ON
-    uPortLogOff();
+        uPortLogOff();
+    #endif
+
+    // turn on the mutex debugging
+    #ifdef U_CFG_MUTEX_DEBUG
+        printf("***********************\n" \
+               "Mutex Debugging Enabled\n" \
+               "***********************\n");        
+        uMutexDebugInit();
+        uMutexDebugWatchdog(uMutexDebugPrint, NULL, U_MUTEX_DEBUG_WATCHDOG_TIMEOUT_SECONDS);
     #endif
 
     writeLog("Initiating the UBXLIB Device API...");
     errorCode = uDeviceInit();
     if (errorCode != 0) {
-        writeFatal("* Failed to initiate the UBXLIB device API: %d", errorCode);
+        writeFatal("* uDeviceInit() Failed: %d", errorCode);
         return errorCode;
     }
 
@@ -242,25 +225,22 @@ static int32_t initCellularDevice(void)
     writeLog("Opening/Turning on the cellular module...");
     errorCode = uDeviceOpen(&deviceCfg, &gDeviceHandle);
     if (errorCode != 0) {
-        writeFatal("* Failed to turn on the cellular module: %d", errorCode);
+        writeFatal("* Failed to turn on the cellular module with uDeviceOpen(): %d", errorCode);
         return errorCode;
     }
 
-    // get serial number
-    errorCode = getSerialNumber();
-    if (errorCode < 0) {
-        writeFatal("* Failed to get the serial number of the module: %d", errorCode);
-        return errorCode;
-    }
-
+    displayCellularModuleInfo();
+    
     return configureCellularModule();
 }
 
 /// @brief Initialises the XPLR device LEDs, Buttons and file system and handles the startup button press
 static bool initXplrDevice(void)
 {
-    if (uPortInit() != 0) {
-        printFatal("* Failed to initiate UBXLIB - not running application!");
+    int32_t errorCode;
+    errorCode = uPortInit();
+    if (errorCode < 0) {
+        printFatal("* uPortInit() Failed: %d - not running application!", errorCode);
         return false;
     }
     if (!buttonsInit(button_pressed)) {
@@ -268,11 +248,11 @@ static bool initXplrDevice(void)
         return false;
     }
     if (!ledsInit()) {
-        printFatal("* Failed to initiate leds - not running application!");
+        printFatal("* Failed to initiate LEDs - not running application!");
         return false;
     }
     if (!extFsInit()) {
-        printFatal("* Failed to mounth File System - not running application!");
+        printFatal("* Failed to mount File System - not running application!");
         return false;
     }
 
@@ -354,6 +334,50 @@ static void dwellAppLoop(void)
     printDebug("*** Application Tick ***\n");
 }
 
+#ifdef U_CFG_HEAP_MONITOR         // see prj.conf to enable
+static void checkHeapInfo(void)
+{
+    uPortLogOn();
+    printf("Checking for unfreed mallocs...\n");
+    int32_t mallocs = uPortHeapDump(NULL);
+    if (mallocs > 0) 
+        printf("WARNING: Still have mallocs left!...\n");
+    else
+        printf("Mallocs are all freed.\n");
+
+    uPortLogOff();
+}
+#endif
+
+int32_t closeCellularDevice(void)
+{
+    writeLog("Turning off SARA-R510S...");
+    int32_t errorCode;
+    
+    errorCode = uDeviceClose(gDeviceHandle, true);
+    if (errorCode < 0) {
+        writeWarn("Failed to close the cellular module with uDeviceClose(): %d", errorCode);
+        return errorCode;
+    }
+
+    return U_ERROR_COMMON_SUCCESS;
+}
+
+int32_t closeXPLRDevice(void)
+{
+    int32_t errorCode;
+    
+    errorCode = uDeviceDeinit();
+    if (errorCode < 0) {
+        writeWarn("Failed to de-initialize the device API with uDeviceDeinit(): %d", errorCode);
+        return errorCode;
+    }
+
+    uPortDeinit();
+
+    return U_ERROR_COMMON_SUCCESS;
+}
+
 /* ----------------------------------------------------------------
  * PUBLIC FUNCTIONS
  * -------------------------------------------------------------- */
@@ -398,6 +422,9 @@ int32_t setAppLogLevel(commandParamsList_t *params)
 void setButtonTwoFunction(void (*func)(void))
 {
     buttonTwoFunc = func;
+    buttonCommandEnabled = true;
+    printInfo("Button #2 is now enabled");
+
 }
 
 /// @brief Method of pausing the running of the main loop. 
@@ -415,10 +442,6 @@ void pauseMainLoop(bool state)
 /// @param appFunc The function pointer of the app event code
 void runApplicationLoop(bool (*appFunc)(void))
 {
-    // now allow the buttons to run their commands
-    buttonCommandEnabled = true;
-    printInfo("Buttons #1 and #2 are now enabled");
-
     while(!gExitApp) {
         dwellAppLoop();
 
@@ -449,12 +472,22 @@ void finalize(applicationStates_t appState)
     SET_BLUE_LED;
     stopAndWait(NETWORK_REG_TASK);
 
-    writeLog("Application Finished.");
+    finalizeAllTasks();
 
     closeLogFile(true);
-    uPortDeinit();
+
+    closeCellularDevice();
+
+    closeXPLRDevice();
+
+    closeConfig();
 
     SET_NO_LEDS;
+
+    #ifdef U_CFG_HEAP_MONITOR // see prj.conf how to enable
+    checkHeapInfo();
+    #endif
+
     printf("\n\n\nXPLR App has finished. Press button #1 to display log...");
 
     displayLogLoop();
@@ -465,10 +498,18 @@ void finalize(applicationStates_t appState)
 bool startupFramework(void)
 {
     int32_t errorCode;
-
+        
     // initialise our LEDs and start up button commands
     if (!initXplrDevice())
         return false;
+
+    // check if ubxlib logging is enabled when the MUTEX or HEAP debug is enabled
+    #ifndef UBXLIB_LOGGING_ON
+        #ifdef U_CFG_MUTEX_DEBUG
+            printf("WARNING: MUTEX debugging is enabled, but UBXLIB logging is not enabled.\n" \
+                   "         Please enable UBXLIB_LOGGING_ON in config.h\n");
+        #endif
+    #endif
 
     displayAppVersion();
 
@@ -481,7 +522,7 @@ bool startupFramework(void)
         finalize(ERROR);
     }
 
-    errorCode = runTask(LED_TASK);
+    errorCode = runTask(LED_TASK, NULL);
     if (errorCode != 0) {
         writeFatal("* Failed to start LED task - not running application!");
         finalize(ERROR);

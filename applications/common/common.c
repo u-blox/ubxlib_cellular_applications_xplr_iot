@@ -194,3 +194,15 @@ void runTaskAndDelete(void *pParams)
     uPortTaskDelete(NULL);
     uPortTaskBlock(2);
 }
+
+bool waitFor(bool (*checkFunction)(void))
+{
+    while(!gExitApp) {
+        if (checkFunction())
+            return true;
+        
+        uPortTaskBlock(1000);
+    }
+
+    return false;
+}

@@ -39,9 +39,6 @@
 /* ----------------------------------------------------------------
  * MACORS for common task usage/access
  * -------------------------------------------------------------- */
-#define SET_APP_STATUS(x)           tempAppStatus = gAppStatus; gAppStatus = x
-#define REVERT_APP_STATUS()        gAppStatus = tempAppStatus
-
 #define IS_NETWORK_AVAILABLE        (gIsNetworkSignalValid && gIsNetworkUp)
 
 #define NUM_ELEMENTS(x)             (sizeof(x) / sizeof(x[0]))
@@ -114,7 +111,7 @@ typedef struct {
  * -------------------------------------------------------------- */
 
 // serial number of the cellular module
-extern char gSerialNumber[U_SECURITY_SERIAL_NUMBER_MAX_LENGTH_BYTES];
+extern char gSerialNumber[U_CELL_INFO_IMEI_SIZE+1];
 
 // This is the ubxlib deviceHandle for communicating with the celullar module
 extern uDeviceHandle_t gDeviceHandle;
@@ -130,6 +127,9 @@ extern bool gIsNetworkUp;
 
 // This flag represents the module can hear the network signaling (RSRP != 0)
 extern bool gIsNetworkSignalValid;
+
+// This flag represents the MQTT Client is connected to the broker or SN gateway
+extern bool gIsMQTTConnected;
 
 // application status
 extern applicationStates_t gAppStatus;
@@ -154,5 +154,7 @@ int32_t getParamValue(commandParamsList_t *params, size_t index, int32_t minValu
 void getTimeStamp(char *timeStamp);
 
 void runTaskAndDelete(void *pParams);
+
+bool waitFor(bool (*checkFunction)(void));
 
 #endif

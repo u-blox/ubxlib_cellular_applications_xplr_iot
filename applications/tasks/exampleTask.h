@@ -29,6 +29,7 @@
 int32_t initExampleTask(taskConfig_t *config);
 int32_t startExampleTaskLoop(commandParamsList_t *params);
 int32_t stopExampleTaskLoop(commandParamsList_t *params);
+int32_t finalizeExampleTask(void);
 
 /* ----------------------------------------------------------------
  * PUBLIC TASK FUNCTIONS

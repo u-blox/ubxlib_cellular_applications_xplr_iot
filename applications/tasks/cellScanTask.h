@@ -29,6 +29,7 @@
 int32_t initCellScanTask(taskConfig_t *config);
 int32_t startCellScanTaskLoop(commandParamsList_t *params);
 int32_t stopCellScanTask(commandParamsList_t *params);
+int32_t finalizeCellScanTask(void);
 
 /* ----------------------------------------------------------------
  * PUBLIC TASK FUNCTIONS

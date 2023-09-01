@@ -40,6 +40,8 @@
 
 #define FILE_READ_BUFFER 100
 
+#define FLUSH_TIMER_SECONDS 60
+
 /* ----------------------------------------------------------------
  * STATIC VARIABLES
  * -------------------------------------------------------------- */
@@ -50,6 +52,7 @@ static struct fs_file_t logFile;
 static bool logFileOpen = false;
 
 static uPortMutexHandle_t pLogMutex = NULL;
+static uPortTimerHandle_t pFlushTimerHandle = NULL;
 
 static logLevels_t gLogLevel = eINFO;
 
@@ -104,16 +107,58 @@ static bool printHeader(logLevels_t level, bool writeToFile)
     return true;
 }
 
+static void flushTimerCallback(void *callbackHandle, void *param)
+{
+    MUTEX_LOCK
+        printDebug("Flushing file system... ");
+        fs_sync(&logFile);
+        printDebug("Done");
+    MUTEX_UNLOCK
+}
+
+static void startFlushTimer()
+{
+    int32_t errorCode = uPortTimerCreate(&pFlushTimerHandle, NULL, flushTimerCallback, NULL, FLUSH_TIMER_SECONDS * 1000, true);
+    if (errorCode < 0) {
+        printWarn("Failed to create the log file flushing timer: %d", errorCode);
+    } else {
+        errorCode = uPortTimerStart(pFlushTimerHandle);
+        if (errorCode == 0)
+            printInfo("Started log file flushing.... every %d seconds", FLUSH_TIMER_SECONDS);
+        else
+            printWarn("Failed to start the log file flushing: %d", errorCode);
+    }
+}
+
+static bool openLogFile(const char *pFilename)
+{
+    fs_file_t_init(&logFile);
+    const char *path = extFsPath(pFilename);
+    int result = fs_open(&logFile, path, FS_O_APPEND | FS_O_CREATE | FS_O_RDWR);
+
+    if (result == 0) {
+        printLog("File logging enabled");
+        logFileOpen = true;
+    } else {
+        printError("Failed to open log file: %d\n Logging to the log file will not be available.", result);
+        logFileOpen = false;
+    }
+
+    return logFileOpen;
+}
+
+static int32_t createLogFileMutex(void)
+{
+    int32_t errorCode = uPortMutexCreate(&pLogMutex);
+    if (errorCode < 0)
+        printError("Failed to create the log mutex: %d\n Logging to the log file will not be available.", errorCode);
+
+    return errorCode;
+}
+
 /* ----------------------------------------------------------------
  * PUBLIC FUNCTIONS
  * -------------------------------------------------------------- */
-int openFile(const char *filename, struct fs_file_t *file)
-{
-    fs_file_t_init(file);
-    const char *path = extFsPath(filename);
-    return fs_open(file, path, FS_O_APPEND | FS_O_CREATE | FS_O_RDWR);
-}
-
 void setLogLevel(logLevels_t logLevel)
 {
     printInfo("Setting log level from %d to %d", gLogLevel, logLevel);
@@ -178,11 +223,14 @@ void closeLogFile(bool displayWarning)
 
         logFileOpen = false;
         fs_close(&logFile);
+
+        if (pFlushTimerHandle != NULL)
+            uPortTimerStop(pFlushTimerHandle);
     
     MUTEX_UNLOCK
     
     if (displayWarning)
-        printf("\nLog file is now closed.\n");
+        printf("Log file is now closed.\n");
 }
 
 void displayLogFile(void)
@@ -229,18 +277,9 @@ void deleteFile(const char *pFilename)
 }
 
 void startLogging(const char *pFilename) {
-    int32_t errorCode = uPortMutexCreate(&pLogMutex);
-    if (errorCode == 0) {
-        int result = openFile(pFilename, &logFile);
-        if (result == 0) {
-            printLog("File logging enabled");
-            logFileOpen = true;
-        } else {
-            printLog("* Failed to open log file: %d", result);
-        }
-    } else {
-        printLog("* Failed to create the log mutex: %d", errorCode);
-        printLog("Logging to the file will not be available.");
-        pLogMutex = NULL;
-    }
+    if (createLogFileMutex() < 0)
+        return;
+
+    if (openLogFile(pFilename))
+        startFlushTimer();
 }
