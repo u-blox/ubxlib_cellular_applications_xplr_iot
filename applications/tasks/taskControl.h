@@ -121,23 +121,47 @@ typedef struct TaskHandles {
 typedef void (*taskStoppedCallback_t)(void *);
 
 typedef struct TaskConfig {
+    /// @brief The task ID which is taken from the task list enum
     taskTypeId_t id;
+
+    /// @brief Name to use in the logging for this appTask
     const char *name;
+
+    /// @brief How long the task loop should dwell for
     int32_t taskLoopDwellTime;
+
+    /// @brief Flag to denote the appTask has been initialized and can be start/stop/finialized
     bool initialised;
+
+    /// @brief The handles for the appTask's Task, Mutex and EventQueue
     taskHandles_t handles;
+
+    /// @brief callback function for when the appTask's loop has stopped.
     taskStoppedCallback_t taskStoppedCallback;
 } taskConfig_t;
 
 typedef int32_t (*taskInit_t)(taskConfig_t *taskConfig);
 typedef int32_t (*taskStart_t)(commandParamsList_t *params);
 typedef int32_t (*taskStop_t)(commandParamsList_t *params);
+typedef int32_t (*taskFinialize_t)(void);
 
 typedef struct TaskRunner {
+    /// @brief This function is called once at the beginning of the application
     taskInit_t initFunc;
+
+    /// @brief This function starts the appTask Loop.
     taskStart_t startFunc;
+
+    /// @brief This function stops the appTask Loop
     taskStop_t stopFunc;
+
+    /// @brief This function finalizes the appTask at the end of the application
+    taskFinialize_t finalizeFunc;
+
+    /// @brief This flag denotes the appTask must be stopped.
     bool explicit_stop;
+
+    /// @brief Contains the configuration for the appTask (see above)
     taskConfig_t config;
 } taskRunner_t;
 
@@ -157,5 +181,8 @@ void dwellTask(taskConfig_t *taskConfig, bool (*exitFunc)(void));
 
 void stopAndWait(taskTypeId_t id);
 void waitForAllTasksToStop(void);
+
+/// @brief Finalize all the tasks, called at the end of the application 
+int32_t finalizeAllTasks(void);
 
 #endif

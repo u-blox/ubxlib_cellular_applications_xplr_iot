@@ -112,7 +112,7 @@ static void flushTimerCallback(void *callbackHandle, void *param)
     MUTEX_LOCK
         printDebug("Flushing file system... ");
         fs_sync(&logFile);
-        printDebug("Done\n");
+        printDebug("Done");
     MUTEX_UNLOCK
 }
 

@@ -81,12 +81,12 @@ void main(void)
 
     // The Network registration task is used to connect to the cellular network
     // This will monitor the +CxREG URCs
-    if (!runTask(NETWORK_REG_TASK, networkIsUp)) goto FINALIZE;
+    if (runTask(NETWORK_REG_TASK, networkIsUp) != U_ERROR_COMMON_SUCCESS) goto FINALIZE;
 
     // The MQTT task connects and reconnects to the MQTT broker selected in the 
     // config.h file. This needs to run for MQTT messages to be published and
     // for remote control messages to be handled
-    if (!runTask(MQTT_TASK, mqttConnectionIsUp)) goto FINALIZE;
+    if (runTask(MQTT_TASK, mqttConnectionIsUp) != U_ERROR_COMMON_SUCCESS) goto FINALIZE;
 
     // Subscribe to the main AppControl topic for remote control the main application (this)
     subscribeToTopicAsync(APP_CONTROL_TOPIC, U_MQTT_QOS_AT_MOST_ONCE, callbacks, NUM_ELEMENTS(callbacks));

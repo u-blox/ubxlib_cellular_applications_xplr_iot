@@ -441,8 +441,6 @@ static void taskLoop(void *pParameters)
         }
     }
 
-    printf("MQTT Task Loop Finished!\n");
-
     // Application exiting, so disconnect from MQTT broker/SN gateway...
     disconnectBroker();
     uMqttClientClose(pContext);
@@ -894,4 +892,9 @@ int32_t startMQTTTaskLoop(commandParamsList_t *params)
 int32_t stopMQTTTaskLoop(commandParamsList_t *params)
 {
     STOP_TASK;
+}
+
+int32_t finalizeMQTTTask(void)
+{
+    return U_ERROR_COMMON_SUCCESS;
 }

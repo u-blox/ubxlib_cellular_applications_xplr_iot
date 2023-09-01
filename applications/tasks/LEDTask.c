@@ -57,10 +57,10 @@ ledAppState_t ledAppStatus[] = {
     {REGISTERED, {ledRedOff, ledGreenOff, ledBlueOn}},
     {ERROR, {ledRedOn, ledGreenOff, ledBlueOff}},
     {SHUTDOWN, {ledRedOn, ledGreenOn, ledBlueOn}},
-    {MQTT_CONNECTED, {ledRedOff, ledGreenOn, ledBlueOff}},
+    {MQTT_CONNECTED, {ledRedOff, ledGreenFlash, ledBlueOff}},
     {MQTT_DISCONNECTED, {ledRedOff, ledGreenFlash, ledBlueOff}},
-    {START_SIGNAL_QUALITY, {ledRedOff, ledGreenOff, ledBlueOn}},
-    {LOCATION_MEAS, {ledRedOn, ledGreenOn, ledBlueOn}},
+    {START_SIGNAL_QUALITY, {ledRedOff, ledGreenOff, ledBlueFlash}},
+    {LOCATION_MEAS, {ledRedFlash, ledGreenFlash, ledBlueFlash}},
     {REGISTRATION_DENIED, {ledRedPulse, ledGreenOff, ledBluePulse}},
 };
 
@@ -196,4 +196,9 @@ int32_t startLEDTaskLoop(commandParamsList_t *params)
 int32_t stopLEDTaskLoop(commandParamsList_t *params)
 {
     STOP_TASK;
+}
+
+int32_t finalizeLEDTask(void)
+{
+    return U_ERROR_COMMON_SUCCESS;
 }

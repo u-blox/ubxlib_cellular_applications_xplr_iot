@@ -181,3 +181,8 @@ int32_t stopExampleTaskLoop(commandParamsList_t *params)
 {
     STOP_TASK;
 }
+
+int32_t finalizeExampleTask(void)
+{
+    return U_ERROR_COMMON_SUCCESS;
+}

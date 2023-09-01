@@ -372,3 +372,8 @@ int32_t stopNetworkRegistrationTaskLoop(commandParamsList_t *params)
 {
     STOP_TASK;
 }
+
+int32_t finalizeNetworkRegistrationTask(void)
+{
+    return U_ERROR_COMMON_SUCCESS;
+}

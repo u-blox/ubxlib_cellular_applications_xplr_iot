@@ -59,4 +59,7 @@ bool setIntParamFromConfig(const char *key, int32_t *param);
 /// @return True if the bool value was set, False otherwise
 bool setBoolParamFromConfig(const char *key, const char *value, bool *param);
 
+/// @brief Clears down the memory allocated by the configuration
+void closeConfig(void);
+
 #endif

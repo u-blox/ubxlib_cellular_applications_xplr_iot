@@ -333,3 +333,14 @@ int32_t stopLocationTaskLoop(commandParamsList_t *params)
 {
     STOP_TASK;
 }
+
+int32_t finalizeLocationTask(void)
+{
+    int32_t errorCode = uDeviceClose(gnssHandle, true);
+    if (errorCode < 0) {
+        writeWarn("Failed to close the GNSS device uDeviceClose(): %d", errorCode);
+        return errorCode;
+    }
+
+    return U_ERROR_COMMON_SUCCESS;
+}

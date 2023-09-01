@@ -126,7 +126,7 @@ static void measureSignalQuality(void)
         // Checking if some radio parameters are not zero is a good way
         // to determine if the network is visible and useable.
         // See macro "IS_NETWORK_AVAILABLE"
-        gIsNetworkSignalValid = (rsrp != 0) && (rsrq != 2147483647);
+        gIsNetworkSignalValid = (rsrp != 0) && (rsrq != 2147483647) && (rssi != 0);
 
         snprintf(jsonBuffer, JSON_STRING_LENGTH, format, timestamp, 
                                 rsrp, rsrq, rssi, snr, rxqual, 
@@ -251,4 +251,9 @@ int32_t startSignalQualityTaskLoop(commandParamsList_t *params)
 int32_t stopSignalQualityTaskLoop(commandParamsList_t *params)
 {
     STOP_TASK;
+}
+
+int32_t finalizeSignalQualityTask(void)
+{
+    return U_ERROR_COMMON_SUCCESS;
 }

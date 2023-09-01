@@ -52,22 +52,24 @@
  * -------------------------------------------------------------- */
 #define LOGGING_LEVEL eINFO            // taken from logLevels_t
 
+
 /* ----------------------------------------------------------------
  * UBXLIB DEBUG LOGGING     Uncomment this line to enable the 
- *                          ubxlib logging system
- * 
+ *                          ubxlib logging system. This will print
+ *                          out the ubxlib logging to the terminal
+ *                          but NOT to the log file.
  * -------------------------------------------------------------- */
 //#define UBXLIB_LOGGING_ON
 
 /* ----------------------------------------------------------------
- * Enable Heap Monitoring - This will display how many mallocs are 
- *                          left unfreed at the closing of the 
- *                          application. 
- *                          (This costs memory)
- * 
- *                          Comment out to remove heap monitoring
+ * UBXLIB HEAP MONITORING   Please see prj.conf for how to enable
+ *                          HEAP monitoring.
  * -------------------------------------------------------------- */
-#define U_CFG_HEAP_MONITOR
+
+/* ----------------------------------------------------------------
+ * UBXLIB MUTEX DEBUGGING   Please see prj.conf for how to enable
+ *                          MUTEX debugging.
+ * -------------------------------------------------------------- */
 
 /* ----------------------------------------------------------------
  * APN SELECTION

@@ -28,6 +28,7 @@
 int32_t initMQTTTask(taskConfig_t *config);
 int32_t startMQTTTaskLoop(commandParamsList_t *params);
 int32_t stopMQTTTaskLoop(commandParamsList_t *params);
+int32_t finalizeMQTTTask(void);
 
 /* ----------------------------------------------------------------
  * TASK FUNCTIONS

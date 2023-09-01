@@ -252,3 +252,8 @@ int32_t stopCellScanTask(commandParamsList_t *params)
 {
     STOP_TASK;
 }
+
+int32_t finalizeCellScanTask(void)
+{
+    return U_ERROR_COMMON_SUCCESS;
+}

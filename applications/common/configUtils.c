@@ -47,6 +47,9 @@ typedef struct APP_CONFIG_LIST {
 static struct fs_file_t configFile;
 static appConfigList_t *configList;
 
+// this contains the loaded configuration file, which the configList points to.
+static char *configText = NULL;
+
 /* ----------------------------------------------------------------
  * STATIC PRIVATE FUNCTIONS
  * -------------------------------------------------------------- */
@@ -177,8 +180,6 @@ int32_t loadConfigFile(const char *filename)
     int32_t success;
     int32_t errorCode = U_ERROR_COMMON_SUCCESS;
 
-    char *configText = NULL;
-
     const char *path = extFsPath(filename);
     if (!extFsFileExists(path)) {
         writeError("Cconfiguration file not found on file system");
@@ -289,4 +290,17 @@ bool setBoolParamFromConfig(const char *key, const char *compare, bool *param)
 
     *param = strcmp(value, compare) == 0;
     return true;
+}
+
+/// @brief frees memory from the configuration malloced array
+void closeConfig(void)
+{
+    appConfigList_t *pCfg = configList;
+    for(appConfigList_t *kvp = configList; kvp != NULL && pCfg != NULL;) {
+        kvp=pCfg->pNext;
+        uPortFree(pCfg);
+        pCfg = kvp;
+    }
+
+    uPortFree(configText);
 }
