@@ -219,8 +219,6 @@ void closeLogFile(bool displayWarning)
     
     MUTEX_LOCK
     
-        fs_sync(&logFile);
-
         logFileOpen = false;
         fs_close(&logFile);
 
