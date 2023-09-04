@@ -74,7 +74,9 @@
 /* ----------------------------------------------------------------
  * Log File flush to disk.  Flushes the log file cache to disk
  *                          every x minutes. Set to 0 to disable.
-  * -------------------------------------------------------------- */
+ *                          WARNING: This is found to be very buggy
+ *                                   and crashes the app randomly.
+ * -------------------------------------------------------------- */
 #define FLUSH_LOG_FILE_TIMER_MINS    0
 
 /* ----------------------------------------------------------------
