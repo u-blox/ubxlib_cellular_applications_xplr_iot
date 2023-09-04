@@ -24,6 +24,7 @@
 #include <time.h>
 
 #include "common.h"
+#include "config.h"
 #include "log.h"
 #include "ext_fs.h"
 
@@ -38,9 +39,7 @@
 #define LOGBUFF1SIZE 1024
 #define LOGBUFF2SIZE 2048
 
-#define FILE_READ_BUFFER 100
-
-#define FLUSH_TIMER_SECONDS 60
+#define FILE_READ_BUFFER 512
 
 /* ----------------------------------------------------------------
  * STATIC VARIABLES
@@ -55,6 +54,8 @@ static uPortMutexHandle_t pLogMutex = NULL;
 static uPortTimerHandle_t pFlushTimerHandle = NULL;
 
 static logLevels_t gLogLevel = eINFO;
+
+static bool flushLogFileCache = false;
 
 /* ----------------------------------------------------------------
  * GLOBAL VARIABLES
@@ -109,22 +110,19 @@ static bool printHeader(logLevels_t level, bool writeToFile)
 
 static void flushTimerCallback(void *callbackHandle, void *param)
 {
-    MUTEX_LOCK
-        printDebug("Flushing file system... ");
-        fs_sync(&logFile);
-        printDebug("Done");
-    MUTEX_UNLOCK
+    flushLogFileCache = true;
 }
 
 static void startFlushTimer()
 {
-    int32_t errorCode = uPortTimerCreate(&pFlushTimerHandle, NULL, flushTimerCallback, NULL, FLUSH_TIMER_SECONDS * 1000, true);
+    int32_t timerMS = FLUSH_LOG_FILE_TIMER_MINS * 60 * 1000;
+    int32_t errorCode = uPortTimerCreate(&pFlushTimerHandle, NULL, flushTimerCallback, NULL, timerMS, true);
     if (errorCode < 0) {
         printWarn("Failed to create the log file flushing timer: %d", errorCode);
     } else {
         errorCode = uPortTimerStart(pFlushTimerHandle);
         if (errorCode == 0)
-            printInfo("Started log file flushing.... every %d seconds", FLUSH_TIMER_SECONDS);
+            printInfo("Started log file flushing.... every %d minutes", FLUSH_LOG_FILE_TIMER_MINS);
         else
             printWarn("Failed to start the log file flushing: %d", errorCode);
     }
@@ -161,7 +159,7 @@ static int32_t createLogFileMutex(void)
  * -------------------------------------------------------------- */
 void setLogLevel(logLevels_t logLevel)
 {
-    printInfo("Setting log level from %d to %d", gLogLevel, logLevel);
+    printInfo("Setting log level to %d", logLevel);
     gLogLevel = logLevel;
 }
 
@@ -196,10 +194,30 @@ void _writeLog(const char *log, logLevels_t level, bool writeToFile, ...)
         if (header)
             printf("\n");
 
-        if (logFileOpen && writeToFile) {
-            fs_write(&logFile, buff2, strlen(buff2));
-            if (header)
-                fs_write(&logFile, "\n", 1);
+        if (logFileOpen) {
+            if (writeToFile) {
+                int result = fs_write(&logFile, buff2, strlen(buff2));
+                if (result < 0) {
+                    printf("Failed to write to log file: %d", result);
+                }
+
+                if (header) {
+                    result = fs_write(&logFile, "\n", 1);
+                    if (result < 0) {
+                        printf("Failed to write to log file: %d", result);
+                    }
+                }
+
+                if (flushLogFileCache) {
+                    flushLogFileCache = false;
+                    printf("Flushing log file...");
+                    int result = fs_sync(&logFile);
+                    if (result != 0)
+                        printf("FAILED: %d", result);
+                    else
+                        printf("Done.\n");
+                }
+            }
         }
 
         // DO NOT PUT PRINTLOG OR WRITELOG MARCOS INSIDE
@@ -218,8 +236,6 @@ void closeLogFile(bool displayWarning)
         printf("\nClosing log file... PLEASE WAIT!!!\n");
     
     MUTEX_LOCK
-    
-        fs_sync(&logFile);
 
         logFileOpen = false;
         fs_close(&logFile);
@@ -280,6 +296,10 @@ void startLogging(const char *pFilename) {
     if (createLogFileMutex() < 0)
         return;
 
-    if (openLogFile(pFilename))
-        startFlushTimer();
+    if (openLogFile(pFilename)) {
+        if (FLUSH_LOG_FILE_TIMER_MINS > 0)
+            startFlushTimer();
+        else
+            printInfo("Log file flushing disabled.");
+    }
 }
