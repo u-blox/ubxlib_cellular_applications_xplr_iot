@@ -4,8 +4,7 @@
             "name": "Applications",
             "includePath": [
                 "${default}",
-                "${workspaceFolder}/applications/tasks",
-                "${workspaceFolder}/applications/common",
+                "${workspaceFolder}/applications/**",
                 "${workspaceFolder}/ubxlib/**",
                 "${workspaceFolder}/../env/ncs/zephyr/**"
             ],

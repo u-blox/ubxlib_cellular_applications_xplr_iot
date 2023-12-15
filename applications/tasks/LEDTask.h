@@ -86,6 +86,7 @@ typedef struct {
 int32_t initLEDTask(taskConfig_t *config);
 int32_t startLEDTaskLoop(commandParamsList_t *params);
 int32_t stopLEDTaskLoop(commandParamsList_t *params);
+int32_t finalizeLEDTask(void);
 
 /* ----------------------------------------------------------------
  * TASK FUNCTIONS

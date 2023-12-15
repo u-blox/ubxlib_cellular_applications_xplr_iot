@@ -35,6 +35,8 @@ int32_t startNetworkRegistrationTaskLoop(commandParamsList_t *params);
 // to send their messages if the registration task is stopped.
 int32_t stopNetworkRegistrationTaskLoop(commandParamsList_t *params);
 
+int32_t finalizeNetworkRegistrationTask(void);
+
 /* ----------------------------------------------------------------
  * QUEUE MESSAGE TYPE DEFINITIONS
  * -------------------------------------------------------------- */

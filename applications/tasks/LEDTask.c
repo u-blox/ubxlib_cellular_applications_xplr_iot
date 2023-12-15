@@ -47,20 +47,22 @@ static taskConfig_t *taskConfig = NULL;
 
 // Application Status is mapped to this LED configuration array
 ledAppState_t ledAppStatus[] = {
-    {MANUAL, {ledRedOff, ledGreenOff, ledBlueOff}},
-    {INIT_DEVICE, {ledRedFastPulse, ledGreenOff, ledBlueOff}},
-    {REGISTERING, {ledRedOff, ledGreenOff, ledBluePulse}},
-    {MQTT_CONNECTING, {ledRedOff, ledGreenPulse, ledBlueOff}},
-    {COPS_QUERY, {ledRedOff, ledGreenPulse, ledBlueOn}},
-    {SEND_SIGNAL_QUALITY, {ledRedFlash, ledGreenFlash, ledBlueOff}},
-    {REGISTRATION_UNKNOWN, {ledRedOff, ledGreenOff, ledBlueFlash}},
-    {REGISTERED, {ledRedOff, ledGreenOff, ledBlueOn}},
-    {ERROR, {ledRedOn, ledGreenOff, ledBlueOff}},
-    {SHUTDOWN, {ledRedOn, ledGreenOn, ledBlueOn}},
-    {MQTT_CONNECTED, {ledRedOff, ledGreenOn, ledBlueOff}},
-    {MQTT_DISCONNECTED, {ledRedOff, ledGreenFlash, ledBlueOff}},
-    {START_SIGNAL_QUALITY, {ledRedOff, ledGreenOff, ledBlueOn}},
-    {LOCATION_MEAS, {ledRedOn, ledGreenOn, ledBlueOn}},
+    {MANUAL,                {ledRedOff,         ledGreenOff,    ledBlueOff}},
+    {INIT_DEVICE,           {ledRedFastPulse,   ledGreenOff,    ledBlueOff}},
+    {INIT_DEVICE_DONE,      {ledRedOn,          ledGreenOff,    ledBlueOff}},
+    {REGISTERING,           {ledRedOff,         ledGreenOff,    ledBluePulse}},
+    {MQTT_CONNECTING,       {ledRedOff,         ledGreenPulse,  ledBlueOff}},
+    {COPS_QUERY,            {ledRedOff,         ledGreenPulse,  ledBlueOn}},
+    {SEND_SIGNAL_QUALITY,   {ledRedFlash,       ledGreenFlash,  ledBlueOff}},
+    {REGISTRATION_UNKNOWN,  {ledRedOff,         ledGreenOff,    ledBlueFlash}},
+    {REGISTERED,            {ledRedOff,         ledGreenOff,    ledBlueOn}},
+    {ERROR,                 {ledRedOn,          ledGreenOff,    ledBlueOff}},
+    {SHUTDOWN,              {ledRedOn,          ledGreenOn,     ledBlueOn}},
+    {MQTT_CONNECTED,        {ledRedOff,         ledGreenFlash,  ledBlueOff}},
+    {MQTT_DISCONNECTED,     {ledRedOff,         ledGreenFlash,  ledBlueOff}},
+    {START_SIGNAL_QUALITY,  {ledRedOff,         ledGreenOff,    ledBlueFlash}},
+    {LOCATION_MEAS,         {ledRedFlash,       ledGreenFlash,  ledBlueFlash}},
+    {REGISTRATION_DENIED,   {ledRedPulse,       ledGreenOff,    ledBluePulse}},
 };
 
 /* ----------------------------------------------------------------
@@ -195,4 +197,9 @@ int32_t startLEDTaskLoop(commandParamsList_t *params)
 int32_t stopLEDTaskLoop(commandParamsList_t *params)
 {
     STOP_TASK;
+}
+
+int32_t finalizeLEDTask(void)
+{
+    return U_ERROR_COMMON_SUCCESS;
 }

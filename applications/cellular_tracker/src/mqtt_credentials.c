@@ -31,7 +31,10 @@
  * For MQTT brokers that require security, set the MQTT_SECURITY to TRUE.
  * Use the SECURITY_XXXX Parameters to configure the security profile
  * 
- * NOTE: You will need to have already uploaded certificates.
+ * NOTE: You will need to have already uploaded certificates to the SARA-R5 module
+ *       To do this you will need to use the XPLR-IoT-1-Software firmware so that
+ *       you can directly talk to the SARA-R5 module with m-center and upload the 
+ *       certificates.
  *
  * Missing entries will resolve to NULL if they are used in the application.
  *

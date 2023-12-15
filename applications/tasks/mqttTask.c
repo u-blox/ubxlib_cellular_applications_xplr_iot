@@ -92,6 +92,20 @@ static char tempTopicName[TEMP_TOPIC_NAME_SIZE];
 static bool mqttSN = false;
 static mqttSNTopicNameNode_t *mqttSNTopicNameList = NULL;
 
+static int32_t lastMQTTError = 0;
+
+/// @brief Simple flag to exit any dwelling to connect to the broker
+static bool tryToConnectMQTT = false;
+
+bool gIsMQTTConnected = false;
+
+/* ----------------------------------------------------------------
+ * STATIC FUNCTION DEFINES
+ * -------------------------------------------------------------- */
+
+/// @brief Disconnects from the MQTT broker or SN gateway
+static int32_t disconnectBroker(void);
+
 /* ----------------------------------------------------------------
  * STATIC FUNCTIONS
  * -------------------------------------------------------------- */
@@ -99,6 +113,18 @@ static mqttSNTopicNameNode_t *mqttSNTopicNameList = NULL;
 static bool isNotExiting(void)
 {
     return !gExitApp && !exitTask;
+}
+
+static void handlePublishError(void)
+{
+    if (lastMQTTError == 0) return;
+
+    // Error 34 is "No Network Service" - which shouldn't be if the network is available
+    if (lastMQTTError == 34 && IS_NETWORK_AVAILABLE) {
+        writeWarn("Last publish failed, but the cellular network is available. Reconnecting to %s", MQTT_TYPE_NAME);
+        disconnectBroker();
+        tryToConnectMQTT = true;
+    }
 }
 
 /// @brief Send an MQTT Message - remember to FREE the msg memory!!!!
@@ -110,8 +136,7 @@ static void mqttSendMessage(sendMQTTMsg_t msg)
     int32_t errorCode = U_ERROR_COMMON_NOT_INITIALISED;
 
     bool mqttConnected = uMqttClientIsConnected(pContext);
-
-    if (pContext != NULL && mqttConnected && gIsNetworkUp && gIsNetworkSignalValid) {
+    if (pContext != NULL && mqttConnected && IS_NETWORK_AVAILABLE) {
         if (mqttSN) {
             errorCode = uMqttClientSnPublish(pContext, msg.topic.pShortName, msg.pMessage,
                                                     strlen(msg.pMessage),
@@ -123,28 +148,32 @@ static void mqttSendMessage(sendMQTTMsg_t msg)
                                                     msg.QoS,
                                                     msg.retain);
         }
-        gAppStatus = MQTT_CONNECTED;
+
+        if (errorCode == 0) {
+            lastMQTTError = 0;
+            writeDebug("Published MQTT message");
+        } else {
+            int32_t errValue = uMqttClientGetLastErrorCode(pContext);
+            if (errValue < 0)
+                writeWarn("Failed to publish MQTT message, but can't get error code");
+            else {
+                lastMQTTError = errValue;
+                writeWarn("Failed to publish MQTT message, MQTT Error: %d", lastMQTTError);
+                handlePublishError();
+            }
+        }
+
+    } else {
+        writeWarn("Network or MQTT connection not available, not publishing message");
     }
 
-    if (!mqttConnected)
-        gAppStatus = MQTT_DISCONNECTED;
+    gAppStatus = mqttConnected ? MQTT_CONNECTED : MQTT_DISCONNECTED;
 
     uPortFree(msg.pMessage);
     if (mqttSN)
         uPortFree(msg.topic.pShortName);
     else
         uPortFree(msg.topic.pTopicName);
-
-    if (errorCode == 0)
-        writeDebug("Published MQTT message");
-    else {
-        if (errorCode == U_ERROR_COMMON_NOT_INITIALISED) {
-            writeDebug("Network or MQTT server not available, not publishing message");
-        } else {
-            int32_t errValue = uMqttClientGetLastErrorCode(pContext);
-            writeWarn("Failed to publish MQTT message, %s error: ", errValue);
-        }
-    }
 }
 
 static void queueHandler(void *pParam, size_t paramLengthBytes)
@@ -164,12 +193,12 @@ static void queueHandler(void *pParam, size_t paramLengthBytes)
     }
 }
 
-static void disconnectCallback(int32_t errorCode, void *param)
+static void disconnectCallback(int32_t lastMqttError, void *param)
 {
-    if (errorCode != 0) {
-        gAppStatus = MQTT_DISCONNECTED;
-        writeError("MQTT Disconnect callback with Error Code: %d", errorCode);
-    }
+    gAppStatus = MQTT_DISCONNECTED;
+    gIsMQTTConnected = false;
+
+    // don't bother worrying about the last mqtt error - we're disconnected now!
 }
 
 static void downlinkMessageCallback(int32_t msgCount, void *param)
@@ -181,7 +210,7 @@ static void downlinkMessageCallback(int32_t msgCount, void *param)
 static int32_t connectBroker(void)
 {
     gAppStatus = MQTT_CONNECTING;
-
+    
     uMqttClientConnection_t connection = U_MQTT_CLIENT_CONNECTION_DEFAULT;
     connection.pBrokerNameStr = getConfig("MQTT_BROKER_NAME");
     connection.pUserNameStr = getConfig("MQTT_USERNAME");
@@ -215,6 +244,7 @@ static int32_t connectBroker(void)
     }
 
     writeLog("Connected to %s", MQTT_TYPE_NAME);
+    gIsMQTTConnected = true;
     gAppStatus = MQTT_CONNECTED;
 
     return 0;
@@ -223,10 +253,14 @@ static int32_t connectBroker(void)
 static int32_t disconnectBroker(void)
 {
     int32_t errorCode = uMqttClientDisconnect(pContext);
-    if (errorCode != 0) {
-        writeError("Failed to disconnect from %s: %d", MQTT_TYPE_NAME, errorCode);
+    if (errorCode < 0) {
+        if (!gExitApp)
+            writeError("Failed to disconnect from %s: %d", MQTT_TYPE_NAME, errorCode);
     } else {
-        writeLog("Disconnected from %s", MQTT_TYPE_NAME);
+        if (uMqttClientIsConnected(pContext))
+            writeWarn("Disconnected from %s, but MQTT Client still says connected.", MQTT_TYPE_NAME);
+        else
+            writeLog("Disconnected from %s", MQTT_TYPE_NAME);
     }
 
     return errorCode;
@@ -236,7 +270,7 @@ static int32_t disconnectBroker(void)
 /// @return True if we can keep dwelling, false otherwise
 static bool continueToDwell(void)
 {
-    return isNotExiting() && (messagesToRead == 0);
+    return isNotExiting() && (messagesToRead == 0) && (!tryToConnectMQTT);
 }
 
 static void freeCallbacks(void)
@@ -384,10 +418,17 @@ static void taskLoop(void *pParameters)
     {
         if (!uMqttClientIsConnected(pContext)) {
             gAppStatus = MQTT_DISCONNECTED;
-            if (gIsNetworkUp && gIsNetworkSignalValid) {
+            if (gIsNetworkUp) {
                 writeLog("MQTT client disconnected, trying to connect...");
-                if (connectBroker() != U_ERROR_COMMON_SUCCESS)
+                if (connectBroker() != U_ERROR_COMMON_SUCCESS) {
                     uPortTaskBlock(5000);
+                }
+
+                // while trying to connect this flag may have been set
+                // reset it again as we've just tried to connect so don't
+                // need to try yet again. Lets wait for another publish event
+                // before trying to force a connect again.
+                tryToConnectMQTT = false;
             } else {
                 writeDebug("Can't connect to %s, network is still not available...", MQTT_TYPE_NAME);
                 uPortTaskBlock(2000);
@@ -491,7 +532,7 @@ static void subscribeToTopic(void *pParam)
     }
 
     // wait until the MQTT Task is up and running...
-    while(!isMutexLocked(TASK_MUTEX) && !gExitApp) {
+    while(!TASK_IS_RUNNING && !gExitApp) {
         printDebug("Waiting for MQTT Task to start...");
         uPortTaskBlock(500);
     }
@@ -694,7 +735,7 @@ int32_t subscribeToTopicAsync(const char *taskTopicName, uMqttQos_t qos, callbac
         goto cleanUp;
     }
 
-    snprintf(tempTopicName, TEMP_TOPIC_NAME_SIZE, "/%s/%s", gSerialNumber, taskTopicName);
+    snprintf(tempTopicName, TEMP_TOPIC_NAME_SIZE, "%s/%s", gSerialNumber, taskTopicName);
     topicName = uStrDup(tempTopicName);
     if (topicName == NULL) {
         writeError("Failed to create task topic name - not enough memory");
@@ -739,6 +780,11 @@ int32_t sendMQTTMessage(const char *pTopicName, const char *pMessage, uMqttQos_t
         return U_ERROR_COMMON_NOT_INITIALISED;
     }
 
+    if (!TASK_IS_RUNNING) {
+        writeWarn("Not publishing MQTT message, MQTT Task not running yet");
+        return U_ERROR_COMMON_NOT_INITIALISED;
+    }
+
     if (!IS_NETWORK_AVAILABLE) {
         writeWarn("Not publishing MQTT message, Network is not available at the moment");
         return U_ERROR_COMMON_TEMPORARY_FAILURE;
@@ -746,6 +792,7 @@ int32_t sendMQTTMessage(const char *pTopicName, const char *pMessage, uMqttQos_t
 
     if (pContext == NULL || !uMqttClientIsConnected(pContext)) {
         writeWarn("Not publishing MQTT message, not connected to %s", MQTT_TYPE_NAME);
+        tryToConnectMQTT = true;
         return U_ERROR_COMMON_NOT_INITIALISED;
     }
 
@@ -845,4 +892,9 @@ int32_t startMQTTTaskLoop(commandParamsList_t *params)
 int32_t stopMQTTTaskLoop(commandParamsList_t *params)
 {
     STOP_TASK;
+}
+
+int32_t finalizeMQTTTask(void)
+{
+    return U_ERROR_COMMON_SUCCESS;
 }

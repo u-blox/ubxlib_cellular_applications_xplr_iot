@@ -42,14 +42,49 @@
  * Application Version number - this includes the common/tasks too
  * -------------------------------------------------------------- */
 #define APP_NAME    "Cellular Tracker"
-#define APP_VERSION "v1.0"
+#define APP_VERSION "v1.1"
 
 /* ----------------------------------------------------------------
- * DEBUG LEVEL SETTING - This can be changed remotely using
- *                       "SET_LOG_LEVEL" command via the
- *                        APP_CONTROL MQTT topic
+ * APPLICATION DEBUG LEVEL SETTING 
+ *                          This can be changed remotely using
+ *                          "SET_LOG_LEVEL" command via the
+ *                          APP_CONTROL MQTT topic
  * -------------------------------------------------------------- */
 #define LOGGING_LEVEL eINFO            // taken from logLevels_t
+
+
+/* ----------------------------------------------------------------
+ * UBXLIB DEBUG LOGGING     Uncomment this line to enable the 
+ *                          ubxlib logging system. This will print
+ *                          out the ubxlib logging to the terminal
+ *                          but NOT to the log file.
+ * -------------------------------------------------------------- */
+//#define UBXLIB_LOGGING_ON
+
+/* ----------------------------------------------------------------
+ * UBXLIB HEAP MONITORING   Please see prj.conf for how to enable
+ *                          HEAP monitoring.
+ * -------------------------------------------------------------- */
+
+/* ----------------------------------------------------------------
+ * UBXLIB MUTEX DEBUGGING   Please see prj.conf for how to enable
+ *                          MUTEX debugging.
+ * -------------------------------------------------------------- */
+
+/* ----------------------------------------------------------------
+ * Log File flush to disk.  Flushes the log file cache to disk
+ *                          every x minutes. Set to 0 to disable.
+ *                          WARNING: This is found to be very buggy
+ *                                   and crashes the app randomly.
+ * -------------------------------------------------------------- */
+#define FLUSH_LOG_FILE_TIMER_MINS    0
+
+/* ----------------------------------------------------------------
+ * Enable the AT ECHO to be able to profile the AT Commands using 
+ *                          just the Rx UART line.
+ *                          Comment out if not required.
+ * -------------------------------------------------------------- */
+//#define AT_ECHO_ENABLED              1
 
 /* ----------------------------------------------------------------
  * APN SELECTION
@@ -67,8 +102,8 @@
  *      queries are not available, like the NTP service on TSUDP APN.
  *      Edit this list for other APNs which are restricted/limited.
  * -------------------------------------------------------------- */
-#define APN "TSUDP"     // Thingstream MQTT-Anywhere
-//#define APN "TSIOT"     // Thingstream SIM other brokers
+//#define APN "TSUDP"     // Thingstream MQTT-Anywhere
+#define APN "TSIOT"     // Thingstream SIM other brokers
 //#define APN ""          // Blank - network provided APN
 
 /* ----------------------------------------------------------------
@@ -84,14 +119,16 @@
 // *** Load credentials from file system ONLY ***
 //#define MQTT_FILE_SYSTEM
 
-// *** Thingstream MQTT Services - remember to set TSUDP as the APN for MQTT-ANYWHERE
-#define MQTT_THINGSTREAM_ANYWHERE
+// *** Thingstream MQTT-SN Services - remember to set TSUDP as the APN for MQTT-ANYWHERE
+//#define MQTT_THINGSTREAM_ANYWHERE
 //#define MQTT_THINGSTREAM_FLEX
+
+// *** Thingstream MQTT Services - remember to NOT use TSUDP for the APN for these
 //#define MQTT_THINGSTREAM_NOW_NoTLS_Auth
 //#define MQTT_THINGSTREAM_NOW_TLS_Auth
 
 // *** Mosquitto MQTT Test Service
-//#define MQTT_MOSQUITTO_NoTLS_NoAuth
+#define MQTT_MOSQUITTO_NoTLS_NoAuth
 //#define MQTT_MOSQUITTO_NoTLS_Auth
 //#define MQTT_MOSQUITTO_TLS_Cert
 //#define MQTT_MOSQUITTO_TLS_Auth

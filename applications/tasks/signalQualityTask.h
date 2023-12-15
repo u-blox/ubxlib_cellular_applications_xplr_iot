@@ -29,6 +29,7 @@
 int32_t initSignalQualityTask(taskConfig_t *config);
 int32_t startSignalQualityTaskLoop(commandParamsList_t *params);
 int32_t stopSignalQualityTaskLoop(commandParamsList_t *params);
+int32_t finalizeSignalQualityTask(void);
 
 /* ----------------------------------------------------------------
  * PUBLIC TASK FUNCTIONS

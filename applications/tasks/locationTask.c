@@ -89,14 +89,14 @@ static bool isNotExiting(void)
 
 static bool keepGoing(void *pParam)
 {
-    bool kg = isNotExiting();
-    if (kg) {
-        printDebug("Waiting for GNSS...");
+    bool keepGoing = isNotExiting();
+    if (keepGoing) {
+        printDebug("Waiting for GNSS location...");
     } else {
         printDebug("GNSS location cancelled");
     }
 
-    return kg;
+    return keepGoing;
 }
 
 static char fractionConvert(int32_t x1e7,
@@ -104,7 +104,7 @@ static char fractionConvert(int32_t x1e7,
                           int32_t *pFraction,
                           int32_t divider)
 {
-    char prefix = '+';
+    char prefix = ' ';
 
     // Deal with the sign
     if (x1e7 < 0) {
@@ -122,19 +122,24 @@ static void publishLocation(uLocation_t location)
     int32_t whole;
     int32_t fraction;
 
+    if (!IS_NETWORK_AVAILABLE) {
+        printDebug("publishLocation(): Network is not attached.");
+        return;
+    }
+
     gAppStatus = LOCATION_MEAS;
 
     char timestamp[TIMESTAMP_MAX_LENTH_BYTES];
     getTimeStamp(timestamp);
 
-    char format[] = "{"                                         \
-            "\"Timestamp\":\"%s\", "                            \
-            "\"Location\":{"                                    \
-                "\"Altitude\":\"%d\", "                  \
-                "\"Latitude\":\"%c%d.%07d\", "                  \
-                "\"Longitude\":\"%c%d.%07d\", "                 \
-                "\"Accuracy\":\"%d\", "                  \
-                "\"Speed\":\"%d\", "                     \
+    char format[] = "{"                         \
+            "\"Timestamp\":\"%s\", "            \
+            "\"Location\":{"                    \
+                "\"Altitude\":%d, "             \
+                "\"Latitude\":%c%d.%07d, "      \
+                "\"Longitude\":%c%d.%07d, "     \
+                "\"Accuracy\":%d, "             \
+                "\"Speed\":%d, "                \
                 "\"Time\":\"%4d-%02d-%02d %02d:%02d:%02d\"}"    \
         "}";
 
@@ -155,7 +160,7 @@ static void publishLocation(uLocation_t location)
 static void getLocation(void *pParams)
 {
     if (gettingLocation) {
-        printDebug("Already trying to get location...");
+        printDebug("getLocation(): Already trying to get location...");
         return;
     }
 
@@ -327,4 +332,15 @@ int32_t startLocationTaskLoop(commandParamsList_t *params)
 int32_t stopLocationTaskLoop(commandParamsList_t *params)
 {
     STOP_TASK;
+}
+
+int32_t finalizeLocationTask(void)
+{
+    int32_t errorCode = uDeviceClose(gnssHandle, true);
+    if (errorCode < 0) {
+        writeWarn("Failed to close the GNSS device uDeviceClose(): %d", errorCode);
+        return errorCode;
+    }
+
+    return U_ERROR_COMMON_SUCCESS;
 }
