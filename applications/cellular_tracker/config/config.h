@@ -42,7 +42,7 @@
  * Application Version number - this includes the common/tasks too
  * -------------------------------------------------------------- */
 #define APP_NAME    "Cellular Tracker"
-#define APP_VERSION "v1.1ENG"
+#define APP_VERSION "v1.1"
 
 /* ----------------------------------------------------------------
  * APPLICATION DEBUG LEVEL SETTING 
