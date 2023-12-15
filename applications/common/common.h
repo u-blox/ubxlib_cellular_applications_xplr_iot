@@ -64,6 +64,7 @@
 typedef enum {
     MANUAL,
     INIT_DEVICE,
+    INIT_DEVICE_DONE,
     REGISTERING,
     MQTT_CONNECTING,
     COPS_QUERY,

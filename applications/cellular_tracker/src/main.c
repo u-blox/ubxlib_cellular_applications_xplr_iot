@@ -34,6 +34,8 @@
 #include "locationTask.h"
 #include "cellScanTask.h"
 
+#include "u_mutex_debug.h"
+
 // Application name and version number is in the config.h file
 
 /* ----------------------------------------------------------------
@@ -70,7 +72,6 @@ bool mqttConnectionIsUp(void)
 {
     return gIsMQTTConnected;
 }
-
 /* ----------------------------------------------------------------
  * Main startup function for the framework
  * -------------------------------------------------------------- */

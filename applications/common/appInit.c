@@ -229,8 +229,17 @@ static int32_t initCellularDevice(void)
         return errorCode;
     }
 
+// enable ECHO if required here
+#ifdef AT_ECHO_ENABLED
+        printInfo("AT ECHO is enabled");
+        uAtClientHandle_t atHandle;
+        uCellAtClientHandleGet(gDeviceHandle, &atHandle);
+        uAtClientEnableEchoSet(atHandle, true);
+#endif
+
+    gAppStatus = INIT_DEVICE_DONE;
     displayCellularModuleInfo();
-    
+
     return configureCellularModule();
 }
 
@@ -498,7 +507,16 @@ void finalize(applicationStates_t appState)
 bool startupFramework(void)
 {
     int32_t errorCode;
-        
+
+    #ifdef U_CFG_MUTEX_DEBUG
+    errorCode = uMutexDebugInit();
+    if (errorCode < 0)
+    {
+        printf("Failed to init mutex debug: %d", errorCode);
+    }
+    uMutexDebugWatchdog(uMutexDebugPrint, NULL, U_MUTEX_DEBUG_WATCHDOG_TIMEOUT_SECONDS);
+    #endif
+
     // initialise our LEDs and start up button commands
     if (!initXplrDevice())
         return false;
